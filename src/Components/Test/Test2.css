@@ -1,0 +1,39 @@
+.article-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .article-table th, .article-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  .article-table th {
+    background-color: #f4f4f4;
+    text-align: left;
+  }
+  .selected-articles-table {  
+    width: 100%;  
+    margin-top: 15px;  
+    border-collapse: collapse;  
+  }  
+  
+  .selected-articles-table th,   
+  .selected-articles-table td {  
+    border: 1px solid #ddd;  
+    padding: 8px;  
+    text-align: left;  
+  }  
+  
+  .article-table {  
+    width: 100%;  
+    border-collapse: collapse;  
+  }  
+  
+  .article-table th,   
+  .article-table td {  
+    border: 1px solid #ddd;  
+    padding: 8px;  
+    text-align: left;  
+  }  

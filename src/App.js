@@ -1,25 +1,48 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';  
+import { Routes, Route } from 'react-router-dom';  
+import Template from './Pages/Template22';  
+import Home from './Pages/Home';  
+import About from './Pages/About';  
+import Login from './Pages/Login';
+import SignUp from './Pages/SignUp';
+import LineChart from './Pages/Charts/LineChart';
+import Allcharts from './Pages/Charts/Allcharts'
+import Projects from'./Pages/Project/Project'
+import Articles from './Pages/Article/Article';
+import Catégorie from './Pages/Catégories/Categorie'
+import Test from "./Pages/Project/test"
+import AjouterProjet from "./Pages/Project2/Project2"
+import ProjectForm from "./Pages/Project3/ProjectForm"
+import TestProjet from'./Components/Test/TestProjet'
+import FirstPage from './Components/FirstPage/FirstPage'
+import Test2 from './Components/Test/Test2'
+function App() {  
+  return (  
+    <Routes>  
+       <Route path="/" element={<Login />}></Route>
+       <Route path="/Signup" element={<SignUp />}></Route>
+       <Route path="FirstPage" element={<FirstPage />} />  
+       <Route path="TestProjet" element={<TestProjet />} /> 
+       <Route path="/Test2" element={<Test2 />} />  
+      <Route path="/template" element={<Template />}>  
+      
+        <Route path="home" element={<Home />} />  
+        <Route path="about" element={<About />} /> 
+        <Route path="AllCharts" element={<Allcharts />} />  
+        <Route path="Projects" element={<Projects />} />  
+        <Route path="Article" element={<Articles />} />  
+        <Route path="Catégorie" element={<Catégorie />} />  
+        <Route path="Test" element={<Test />} />  
+        <Route path="AjouterProjet" element={<AjouterProjet />} />  
+        <Route path="ProjectForm" element={<ProjectForm />} />  
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+        
+       
+      </Route>  
+    </Routes>  
 
-export default App;
+
+  );  
+}  
+
+export default App;  

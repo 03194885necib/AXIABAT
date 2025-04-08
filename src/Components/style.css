@@ -1,0 +1,29 @@
+/* Ajoutez ces styles à votre fichier CSS */
+
+.content-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+/* Si vous souhaitez également que le contenu ait une largeur maximale */
+.content-container > * {
+    max-width: 1000px;
+    width: 100%;
+}
+
+/* Pour vous assurer que class est utilisé au lieu de className si vous utilisez du HTML vanille */
+.container {
+    width: 100%;
+    position: relative;
+}
+
+.main {
+    position: relative;
+    width: calc(100% - 300px);
+    left: 300px;
+    min-height: 100vh;
+    transition: 0.5s;
+}

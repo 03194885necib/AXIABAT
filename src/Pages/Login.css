@@ -1,0 +1,155 @@
+/* Global font and layout */
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+.login-container {
+
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: hsl(218, 41%, 15%);
+  /* background-image: radial-gradient(650px circle at 0% 0%, hsl(218, 41%, 35%) 15%, hsl(218, 41%, 30%) 35%, hsl(218, 41%, 20%) 75%, hsl(218, 41%, 19%) 80%, transparent 100%),
+                    radial-gradient(1250px circle at 100% 100%, hsl(218, 41%, 45%) 15%, hsl(218, 41%, 30%) 35%, hsl(218, 41%, 20%) 75%, hsl(218, 41%, 19%) 80%, transparent 100%); */
+                    position: relative;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-image: url('/public/assets/imgs/Genie-Civil.jpg'); /* Chemin vers votre image */
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-attachment: fixed;
+                    z-index: 1;
+
+
+                  }
+
+                  .steg-slogan {
+                    color: white;
+                    text-align: center;
+                    margin-top: -500px;
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                  }
+.login-container .radius-shape-1,
+.login-container .radius-shape-2 {
+  position: absolute;
+  /* background: radial-gradient(#0606a8, #99909e); */
+}
+
+.login-container .radius-shape-1 {
+  height: 220px;
+  width: 220px;
+  top: -60px;
+  left: -130px;
+  border-radius: 50%;
+}
+
+.login-container .radius-shape-2 {
+  width: 300px;
+  height: 300px;
+  bottom: -60px;
+  right: -110px;
+  border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%;
+}
+
+.login-container .bg-glass {
+  background-color: hsla(0, 0%, 100%, 0.85);
+  backdrop-filter: saturate(200%) blur(25px);
+  padding: 50px 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form div {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+form label {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+form input {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
+  transition: border-color 0.3s ease;
+}
+
+form input:focus {
+  border-color: #0715ad;
+  outline: none;
+}
+
+button {
+  padding: 12px;
+  font-size: 1.1rem;
+  background-color: #1e0d91;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #4022c5;
+}
+
+button:focus {
+  outline: none;
+}
+.signup-link {
+  color: #0c006b;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
+
+.login-logo {
+  max-width: 50px;       /* Largeur maximale */
+  height: auto;          /* Maintient les proportions */
+  object-fit: contain;   /* Garantit que l'image n'est pas déformée */
+}
+
+/* Pour un alignement parfait avec le texte */
+.login-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.login-header h2 {
+  margin: 0;
+  font-size: 1.5rem; /* Taille du texte ajustable */
+}
