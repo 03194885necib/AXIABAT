@@ -1,0 +1,119 @@
+/* App.css */
+
+.invoice-container {
+    
+    font-family: sans-serif;
+    margin: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: #f9f9f9;
+  }
+  
+  .invoice-header {
+    background-color: #e0e0e0;
+    padding: 15px;
+    text-align: right;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .invoice-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .invoice-table th,
+  .invoice-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .invoice-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+  
+  .invoice-table thead tr th:nth-child(1), /* Empty checkbox column */
+  .invoice-table tbody tr td:nth-child(1),
+  .invoice-table thead tr th:nth-child(2), /* Empty quantity column */
+  .invoice-table tbody tr td:nth-child(2) {
+    text-align: center;
+  }
+  
+  .invoice-table .description {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px; /* Adjust as needed */
+  }
+  
+  .invoice-summary {
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-top: 1px solid #ccc;
+    text-align: right;
+  }
+  
+  .summary-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+  
+  .summary-label {
+    font-weight: bold;
+    margin-right: 10px;
+  }
+  
+  .summary-value {
+    /* Add styling for the values if needed */
+  }
+  
+  .summary-row.total .summary-label {
+    font-size: 1.2em;
+  }
+  
+  .invoice-footer {
+    padding: 15px;
+    background-color: #e0e0e0;
+    border-top: 1px solid #ccc;
+    text-align: center;
+  }
+  
+  .footer-button {
+    background-color: #5cb85c; /* Example green color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .footer-button:hover {
+    background-color: #4cae4c;
+  }
+  .editable-field {
+    width: 80px; /* Adjust width as needed */
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    text-align: right;
+  }
+  
+  .editable-field:focus {
+    outline: none;
+    border-color: #007bff; /* Example focus color */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  }

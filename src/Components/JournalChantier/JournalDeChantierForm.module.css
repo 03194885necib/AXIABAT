@@ -1,0 +1,146 @@
+/* JournalDeChantierForm.module.css */
+
+.journal-chantier-form {
+  font-family: sans-serif;
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background-color: #fff;
+}
+
+.section h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 5px;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group input[type="number"],
+.form-group textarea {
+  width: calc(100% - 12px); /* Ajustement pour le padding */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box; /* Important pour le width */
+}
+
+.form-group textarea {
+  min-height: 80px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  align-items: flex-start; /* Alignement en haut pour les labels */
+}
+
+.form-row .form-group {
+  flex-grow: 1;
+  margin-bottom: 0; /* Supprimer la marge individuelle des groupes dans une ligne */
+}
+
+.form-row .full-width {
+  flex-basis: 100%;
+}
+
+.checkbox-group label {
+  display: inline-block;
+  margin-right: 10px;
+  font-weight: normal;
+}
+
+.add-button,
+.remove-button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-button {
+  background-color: #5cb85c;
+  color: white;
+  margin-top: 10px;
+}
+
+.remove-button {
+  background-color: #d9534f;
+  color: white;
+  margin-left: 10px;
+}
+
+.add-button:hover,
+.remove-button:hover {
+  opacity: 0.9;
+}
+
+button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  display: block;
+  margin: 20px auto 0;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+/* Style spécifique pour les visas (peut être affiné) */
+.section h3 + div.form-group { /* Cibler le premier form-group après un h3 dans la section */
+  margin-top: 15px;
+}
+
+.print-button {
+  background-color: #00a2e8; /* Couleur différente pour le distinguer */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  display: block;
+  margin: 10px auto 0; /* Marge différente du bouton d'enregistrement */
+}
+
+.print-button:hover {
+  background-color: #007bb2;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

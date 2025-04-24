@@ -3,25 +3,28 @@ import "./Login.css";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase"; // Assure-toi que l'import est correct
+import { auth } from "../firebase"; 
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // Pour afficher les erreurs
+  const [error, setError] = useState(""); 
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Empêche la soumission automatique
+    e.preventDefault(); 
 
     if (!email || !password) {
       setError("Veuillez remplir tous les champs");
       return;
     }
 
+
+
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/FirstPage"); // Redirige si l'authentification est réussie
+      navigate("/FirstPage");
     } catch (error) {
       setError("Email ou mot de passe incorrect");
       console.error("Erreur d'authentification :", error.message);
@@ -36,7 +39,7 @@ const Login = () => {
       <div className="bg-glass">
         <h2>Connexion</h2>
         <form onSubmit={handleLogin}>
-          {error && <p className="error-message">{error}</p>} {/* Affichage des erreurs */}
+          {error && <p className="error-message">{error}</p>}
           <div>
             <label>Email :</label>
             <input
@@ -61,8 +64,8 @@ const Login = () => {
           </div>
           <button type="submit">Se connecter</button>
           <p>
-            Vous n'avez pas de compte ?{" "}
-            <Link to="/Signup" className="signup-link">Créer un compte</Link>
+            mot de passe oblier?{" "}
+            <Link to="/ForgetPassword" className="signup-link">nouvelle mot de passe</Link>
           </p>
         </form>
       </div>

@@ -1,0 +1,506 @@
+/* src/Components/NewArticleSelector.css */
+
+.article-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .article-item:last-child {
+    border-bottom: none;
+  }
+  
+  .selected-article-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    margin-bottom: 5px;
+  }
+  
+  .selected-article-item:last-child {
+    margin-bottom: 0;
+  }
+  
+/* src/Components/NewArticleSelector.css */
+
+.article-selector-container {
+    /* Optional: Add some padding or margin to the main container if needed */
+  }
+  
+  .category-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+  }
+  
+  .category-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .category-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .articles-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+  }
+  
+  .articles-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #555;
+  }
+  
+  .articles-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .article-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .article-item:last-child {
+    border-bottom: none;
+  }
+  
+  .article-designation {
+    flex-grow: 1;
+    margin-right: 10px;
+    color: #333;
+  }
+  
+  .article-unit {
+    color: #777;
+    font-size: 0.9em;
+  }
+  
+  .add-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .add-button:hover {
+    background-color: #1e7e34;
+  }
+  
+  .new-article-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+  }
+  
+  .new-article-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #555;
+  }
+  
+  .new-article-form-group {
+    margin-bottom: 15px;
+  }
+  
+  .new-article-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .new-article-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .add-new-article-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .add-new-article-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .selected-articles-section {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+  }
+  
+  .selected-articles-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #555;
+  }
+  
+  .selected-articles-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .selected-article-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .selected-article-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .remove-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .remove-button:hover {
+    background-color: #c82333;
+  }
+  
+  .use-articles-button-row {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .use-articles-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .use-articles-button:hover {
+    background-color: #0056b3;
+  }
+  /* src/Components/NewArticleSelectorTable.css */
+
+.articles-table-section,
+.selected-articles-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.articles-table-section h3,
+.selected-articles-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.articles-table,
+.selected-articles-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.articles-table th,
+.articles-table td,
+.selected-articles-table th,
+.selected-articles-table td {
+  padding: 10px;
+  border: 1px solid #eee;
+  text-align: left;
+}
+
+.articles-table th,
+.selected-articles-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.add-button,
+.remove-button {
+  background-color: #28a745; /* Green for Add */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.remove-button {
+  background-color: #dc3545; /* Red for Remove */
+}
+
+.add-button:hover {
+  background-color: #1e7e34;
+}
+
+.remove-button:hover {
+  background-color: #c82333;
+}
+
+.new-article-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f8f8f8;
+}
+
+.new-article-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.new-article-form-group {
+  margin-bottom: 15px;
+}
+
+.new-article-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.new-article-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.add-new-article-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.add-new-article-button:hover {
+  background-color: #0056b3;
+}
+
+.use-articles-button-row {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.use-articles-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.use-articles-button:hover {
+  background-color: #0056b3;
+}
+/* src/Components/NewArticleSelectorTable.css */
+
+/* Styles généraux pour les sections et les titres (inchangés) */
+.articles-table-section,
+.selected-articles-section,
+.new-article-section,
+.category-management-section,
+.add-category-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.articles-table-section h3,
+.selected-articles-section h3,
+.new-article-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+/* Styles pour le tableau (inchangés) */
+.articles-table,
+.selected-articles-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.articles-table th,
+.articles-table td,
+.selected-articles-table th,
+.selected-articles-table td {
+  padding: 10px;
+  border: 1px solid #eee;
+  text-align: left;
+}
+
+.articles-table th,
+.selected-articles-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+/* Styles pour les boutons (inchangés) */
+.add-button,
+.remove-button,
+.add-new-article-button,
+.use-articles-button,
+.add-category-button,
+.add-category-submit-button,
+.cancel-category-button {
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  margin-right: 5px; /* Ajout de marge entre les boutons si nécessaire */
+}
+
+.add-button {
+  background-color: #28a745; /* Green for Add */
+}
+
+.remove-button {
+  background-color: #dc3545; /* Red for Remove */
+}
+
+.add-new-article-button {
+  background-color: #007bff; /* Blue for Add New Article */
+}
+
+.use-articles-button {
+  background-color: #007bff; /* Blue for Use Articles */
+}
+
+.add-category-button {
+  background-color: #6c757d; /* Grey for Add Category */
+}
+
+.add-category-submit-button {
+  background-color: #28a745; /* Green for Add Category Submit */
+}
+
+.cancel-category-button {
+  background-color: #dc3545; /* Red for Cancel Category */
+}
+
+.add-button:hover {
+  background-color: #1e7e34;
+}
+
+.remove-button:hover {
+  background-color: #c82333;
+}
+
+.add-new-article-button:hover {
+  background-color: #0056b3;
+}
+
+.use-articles-button:hover {
+  background-color: #0056b3;
+}
+
+.add-category-button:hover {
+  background-color: #545b62;
+}
+
+.add-category-submit-button:hover {
+  background-color: #1e7e34;
+}
+
+.cancel-category-button:hover {
+  background-color: #c82333;
+}
+
+/* Styles pour le formulaire d'ajout de catégorie */
+.add-category-form {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.new-category-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.category-management-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f8f8f8;
+}
+
+.category-management-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+}

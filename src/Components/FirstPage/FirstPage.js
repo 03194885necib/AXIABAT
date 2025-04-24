@@ -17,21 +17,26 @@ const GESCOMP = () => {
       </div>
       
       <div className="module-grid">
-        <div className="module-card" onClick={() => handleCardClick('/Test2')}>
+        <div className="module-card" onClick={() => handleCardClick('/MesArticles')}>
           <div className="module-icon module-icon-data-entry"></div>
           <div className="module-label"> Base des données</div>
         </div>
+        {/* <div className="module-card" >
+          <div className="module-icon module-icon-tender-management" onClick={() => handleCardClick('/ListeArticle')}></div>
+          <div className="module-label">TEEST</div>
+        </div> */}
         <div className="module-card" >
-          <div className="module-icon module-icon-tender-management" onClick={() => handleCardClick('/Test2')}></div>
+          <div className="module-icon module-icon-tender-management" onClick={() => handleCardClick('/FicheProjet')}></div>
           <div className="module-label">Fiche de Projet</div>
         </div>
         <div className="module-card">
-          <div className="module-icon module-icon-offer-opening"></div>
+          <div className="module-icon module-icon-offer-opening" onClick={() => handleCardClick('/JournalCHantier')}></div>
           <div className="module-label">Jornale de chantier  </div>
+          
         </div>
         <div className="module-card">
           <div className="module-icon module-icon-evaluation"></div>
-          <div className="module-label">Suivie et Delais</div>
+          <div className="module-label" onClick={() => handleCardClick('/Delais')}>Suivie et Delais</div>
         </div>
         <div className="module-card" onClick={() => handleCardClick('/TestProjet')}>
           <div className="module-icon module-icon-contracts" ></div>

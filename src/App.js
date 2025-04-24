@@ -13,18 +13,36 @@ import Catégorie from './Pages/Catégories/Categorie'
 import Test from "./Pages/Project/test"
 import AjouterProjet from "./Pages/Project2/Project2"
 import ProjectForm from "./Pages/Project3/ProjectForm"
-import TestProjet from'./Components/Test/TestProjet'
+import TestProjet from'./Components/FicheProjet/TestProjet'
 import FirstPage from './Components/FirstPage/FirstPage'
-import Test2 from './Components/Test/Test2'
+import FicheProjet from './Components/FicheProjet/FicheProjet'
+import ListeArticle from './Components/FicheProjet/ListeArticle/ListeArticle'
+import MesArticles from './Components/Articles/Articles'
+import JournalCHantier from './Components/JournalChantier/JournalCHantier.js'
+import ForgetPassword from './Pages/ForgetPassword'
+import Delais from './Components/gestion des delais/delais2'
+
+
 function App() {  
   return (  
     <Routes>  
        <Route path="/" element={<Login />}></Route>
+
        <Route path="/Signup" element={<SignUp />}></Route>
+       <Route path="/ForgetPassword" element={<ForgetPassword />}></Route>
+       <Route path="/Delais" element={<Delais/>} />  
        <Route path="FirstPage" element={<FirstPage />} />  
        <Route path="TestProjet" element={<TestProjet />} /> 
-       <Route path="/Test2" element={<Test2 />} />  
+       <Route path="/FicheProjet" element={<FicheProjet />} />  
+       <Route path="/MesArticles" element={<MesArticles />} />  
+
+       <Route path="/ListeArticle" element={<ListeArticle />} />  
+
+       <Route path="/JournalCHantier" element={<JournalCHantier/>} />  
+     
+
       <Route path="/template" element={<Template />}>  
+      
       
         <Route path="home" element={<Home />} />  
         <Route path="about" element={<About />} /> 

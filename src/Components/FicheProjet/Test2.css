@@ -37,3 +37,24 @@
     padding: 8px;  
     text-align: left;  
   }  
+  .selected-articles {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+  }
+  
+  .selected-articles h2 {
+    margin-bottom: 10px;
+  }
+  
+  .selected-articles ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .selected-articles li {
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  

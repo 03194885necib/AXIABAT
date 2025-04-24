@@ -6,6 +6,7 @@ const SelectInput = ({ id, options = [], defaultValue, ...props }) => {
         defaultValue={defaultValue}
         className="border p-2 rounded w-full"
         {...props}
+        
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
