@@ -35,8 +35,8 @@ const GESCOMP = () => {
           
         </div>
         <div className="module-card">
-          <div className="module-icon module-icon-evaluation"></div>
-          <div className="module-label" onClick={() => handleCardClick('/Delais')}>Suivie et Delais</div>
+          <div className="module-icon module-icon-evaluation" onClick={() => handleCardClick('/Delais')}></div>
+          <div className="module-label" >Gestion des Delais</div>
         </div>
         <div className="module-card" onClick={() => handleCardClick('/TestProjet')}>
           <div className="module-icon module-icon-contracts" ></div>
