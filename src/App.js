@@ -21,7 +21,7 @@ import MesArticles from './Components/Articles/Articles'
 import JournalCHantier from './Components/JournalChantier/JournalCHantier.js'
 import ForgetPassword from './Pages/ForgetPassword'
 import Delais from './Components/gestion des delais/delais2'
-
+import Decompte from'./Components/Décompte/Décompte.js'
 
 function App() {  
   return (  
@@ -39,8 +39,7 @@ function App() {
        <Route path="/ListeArticle" element={<ListeArticle />} />  
 
        <Route path="/JournalCHantier" element={<JournalCHantier/>} />  
-     
-
+       <Route path="/Decompte" element={<Decompte/>} />  
       <Route path="/template" element={<Template />}>  
       
       

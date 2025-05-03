@@ -254,7 +254,8 @@ const DeadlineManagementCard = () => {
 
                 </FormGrid>
 
-                {/* Buttons to toggle Work Progress and Stoppage sections */}
+
+
                 <ButtonRow>
                     <Button onClick={handleShowWorkProgress} className={showWorkProgress ? 'active' : ''}>
                         Suivi Travaux

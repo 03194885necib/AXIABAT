@@ -43,7 +43,7 @@ const GESCOMP = () => {
           <div className="module-label">Administration</div>
         </div>
         <div className="module-card">
-          <div className="module-icon module-icon-financial-transactions"></div>
+          <div className="module-icon module-icon-financial-transactions" onClick={() => handleCardClick('/Decompte')}></div>
           <div className="module-label">  Suivie budgutaire</div>
         </div>
         <div className="module-card">

@@ -1,0 +1,263 @@
+/* :root {  
+    --primary-color: #2c3e50;  
+    --secondary-color: #3498db;  
+    --background-color: #f4f6f7;  
+    --text-color: #333;  
+  }  
+  
+  .gestion-articles-container {  
+    font-family: 'Arial', sans-serif;  
+    max-width: 1200px;  
+    margin: 0 auto;  
+    padding: 20px;  
+    max-width: 100%;
+    background-color: white;  
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);  
+  }  
+  
+  .header {  
+    margin-bottom: 20px;  
+  }  
+  
+  .header h1 {  
+    color: var(--primary-color);  
+    margin-bottom: 15px;  
+  }  
+  
+  .tabs {  
+    display: flex;  
+    gap: 10px;  
+    margin-bottom: 20px;  
+  }  
+  
+  .tab {  
+    padding: 10px 15px;  
+    border: none;  
+    background-color: #ecf0f1;  
+    cursor: pointer;  
+    transition: all 0.3s ease;  
+  }  
+  
+  .tab.active {  
+    background-color: var(--secondary-color);  
+    color: white;  
+  }  
+  
+  .articles-table {  
+    width: 100%;  
+    border-collapse: collapse;  
+  }  
+  
+  .articles-table thead {  
+    background-color: #f8f9fa;  
+  }  
+  
+  .articles-table th,   
+  .articles-table td {  
+    border: 1px solid #e0e0e0;  
+    padding: 10px;  
+    text-align: center;  
+  }  
+  
+  .quantity-input {  
+    width: 70px;  
+    padding: 5px;  
+    text-align: center;  
+  }  
+  
+  .progress-bar {  
+    background-color: #e0e0e0;  
+    height: 20px;  
+    border-radius: 10px;  
+    overflow: hidden;  
+  }  
+  
+  .progress {  
+    background-color: var(--secondary-color);  
+    height: 100%;  
+    display: flex;  
+    align-items: center;  
+    justify-content: center;  
+    color: white;  
+    font-size: 0.8em;  
+  }  
+  
+  .action-buttons {  
+    display: flex;  
+    justify-content: center;  
+    gap: 10px;  
+  }  
+  
+  .footer-summary {  
+    margin-top: 20px;  
+    background-color: #f8f9fa;  
+    padding: 20px;  
+    border-radius: 5px;  
+  }  
+  
+  .summary-grid {  
+    display: grid;  
+    grid-template-columns: repeat(2, 1fr);  
+    gap: 15px;  
+    margin-bottom: 20px;  
+  }  
+  
+  .summary-item {  
+    display: flex;  
+    justify-content: space-between;  
+    align-items: center;  
+  }  
+  
+  .footer-actions {  
+    display: flex;  
+    justify-content: flex-end;  
+    gap: 15px;  
+  }  
+  
+  .btn-primary,   
+  .btn-secondary {  
+    padding: 10px 20px;  
+    border: none;  
+    border-radius: 5px;  
+    cursor: pointer;  
+    transition: all 0.3s ease;  
+  }  
+  
+  .btn-primary {  
+    background-color: var(--secondary-color);  
+    color: white;  
+  }  
+  
+  .btn-secondary {  
+    background-color: #ecf0f1;  
+    color: var(--text-color);  
+  }  
+
+   */
+
+
+   .container {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.formGroup {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="month"],
+input[type="number"],
+select {
+    width: calc(100% - 12px);
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+}
+
+select {
+    cursor: pointer;
+}
+
+h3 {
+    color: #333;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+}
+
+.articleItem {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.articleItem p {
+    margin-bottom: 5px;
+    color: #666;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.success-message {
+    color: green;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.loading {
+    color: orange;
+    font-style: italic;
+}
+/* ... les styles précédents ... */
+
+.articlesTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  border: 1px solid #ccc;
+}
+
+.articlesTable th,
+.articlesTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.articlesTable th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.inputTable {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
