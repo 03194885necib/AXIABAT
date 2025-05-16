@@ -16,6 +16,8 @@ function DécompteForm() {
     const [loadingProjets, setLoadingProjets] = useState(true);
     const [loadingArticles, setLoadingArticles] = useState(false);
     const [submissionStatus, setSubmissionStatus] = useState(null);
+    const [ttcPrécedent, setTtcPrécedent] = useState(0);
+    const [ttcActuel, setTtcActuel] = useState(0);
 
     useEffect(() => {
         const fetchProjets = async () => {
@@ -55,7 +57,7 @@ function DécompteForm() {
                         initialQuantités[article.id] = 0;
                         initialPourcentages[article.id] = 0;
                         initialQuantitésPrécédentes[article.id] = await fetchPreviousQuantity(selectedProjetId, article.id);
-                        
+
                         initialPourcentages[article.id] = article.quantity > 0
                             ? Math.round(((initialQuantitésPrécédentes[article.id] || 0) / article.quantity) * 100)
                             : 0;
@@ -85,23 +87,83 @@ function DécompteForm() {
                 articlesDecompteRef,
                 where('projetId', '==', projectId),
                 where('articleId', '==', articleId),
-
-                // Ordonner par date de création pour obtenir le plus récent
-                // orderBy('dateCréation', 'desc'),
-                // limit(1)
             );
             const snapshot = await getDocs(q);
             let totalPreviousQuantity = 0;
             snapshot.forEach(doc => {
                 totalPreviousQuantity += doc.data().quantitéRéalisée || 0;
-                console.log("totalPreviousQuantity",articleId)
-
             });
             return totalPreviousQuantity;
         };
 
         fetchArticlesWithPreviousData();
     }, [selectedProjetId]);
+
+    useEffect(() => {
+        const fetchPreviousTTC = async (projectId, moisActuel) => {
+            if (!projectId || !moisActuel) {
+                return 0;
+            }
+
+            const premierJourMoisActuel = new Date(moisActuel + '-01');
+            const premierJourMoisPrécedent = new Date(premierJourMoisActuel);
+            premierJourMoisPrécedent.setMonth(premierJourMoisPrécedent.getMonth() - 1);
+
+            const anneePrecedente = premierJourMoisPrécedent.getFullYear();
+            const moisPrecedent = (premierJourMoisPrécedent.getMonth() + 1).toString().padStart(2, '0');
+            const moisFormatPrecedent = `<span class="math-inline">\{anneePrecedente\}\-</span>{moisPrecedent}`;
+
+            const décomptesRef = collection(db, 'décomptes');
+            const q = query(
+                décomptesRef,
+                where('projetId', '==', projectId),
+                where('mois', '==', moisFormatPrecedent),
+
+            );
+
+            const snapshot = await getDocs(q);
+            console.log(snapshot)
+            let totalTTC = 0;
+            if (!snapshot.empty) {
+
+                // Si plusieurs décomptes, vous devrez décider comment agréger (somme, dernier, etc.)
+                const premierDoc = snapshot.docs[0];
+                const ttc = parseFloat(premierDoc.ttc || 0);
+                setTtcPrécedent(ttc);
+
+                const articlesDecompteRef = collection(db, 'décomptes', premierDoc.id, 'ArticlesDecompte');
+
+                const articlesSnapshot = await getDocs(articlesDecompteRef);
+                articlesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalTTC += (data.quantitéRéalisée || 0) * (data.prixUnitaire || 0) * (1 + (data.tvaRate || 0));
+                });
+            }
+            return totalTTC;
+        };
+
+        const calculateTtcActuel = () => {
+            let total = 0;
+            for (const articleId in quantitésRéalisées) {
+                if (quantitésRéalisées.hasOwnProperty(articleId) && quantitésRéalisées[articleId] > 0) {
+                    const article = articlesProjet.find(art => art.id === articleId);
+                    if (article) {
+                        total += quantitésRéalisées[articleId] * article.unitPrice * (1 + (article.tvaRate || 0));
+                    }
+                }
+            }
+            setTtcActuel(total);
+        };
+
+        if (selectedProjetId && moisDécompte) {
+            fetchPreviousTTC(selectedProjetId, moisDécompte).then(ttc => setTtcPrécedent(ttc));
+            calculateTtcActuel();
+        } else {
+            setTtcPrécedent(0);
+            setTtcActuel(0);
+        }
+    }, [selectedProjetId, moisDécompte, quantitésRéalisées, articlesProjet]);
+
 
     const handleProjetChange = (event) => {
         setSelectedProjetId(event.target.value);
@@ -135,21 +197,22 @@ function DécompteForm() {
             mois: moisDécompte,
             numero: parseInt(numeroDécompte),
             dateCréation: Timestamp.now(),
+            ttc: ttcActuel,
         };
 
+console.log(décompteData)
         try {
             const décompteRef = collection(db, 'décomptes');
             const newDécompteDocRef = await addDoc(décompteRef, décompteData);
             const décompteId = newDécompteDocRef.id;
 
-            const articlesDecompteRef = collection(db, 'ArticlesDecompte');
+            const articlesDecompteRef = collection(db, 'décomptes', décompteId, 'ArticlesDecompte');
 
             for (const articleId in quantitésRéalisées) {
                 if (quantitésRéalisées.hasOwnProperty(articleId) && quantitésRéalisées[articleId] > 0) {
                     const article = articlesProjet.find(art => art.id === articleId);
                     if (article) {
                         await addDoc(articlesDecompteRef, {
-                            décompteId: décompteId,
                             projetId: selectedProjetId,
                             articleId: article.id,
                             articleNumber: article.articleNumber,
@@ -157,7 +220,7 @@ function DécompteForm() {
                             unite: article.unite,
                             quantitéMarché: article.quantity,
                             prixUnitaire: article.unitPrice,
-                            tvaRate: article.tvaRate,
+                            tvaRate: article.tvaRate || 0,
                             quantitéRéalisée: quantitésRéalisées[articleId],
                             pourcentageRéalisation: pourcentagesRéalisation[articleId] || 0,
                         });
@@ -236,18 +299,18 @@ function DécompteForm() {
                                         <th>Unité</th>
                                         <th>Quantité Marché</th>
                                         <th>Quantité Précédente</th>
-                                        <th>Quantité</th>
+                                        <th>Quantité(Mois)</th>
+                                        <th>Qte cumulé</th>
                                         <th>Prix Unitaire</th>
-                                        <th>TVA</th>
-                                        <th>Pourcentage de Réalisation</th>
-                                        <th>Prix Final</th>
+                                        <th>Prix Finale</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {articlesProjet.map(article => {
                                         const quantitéActuelle = quantitésRéalisées[article.id] || 0;
-                                        const pourcentageRéalisationCalculé = article.quantity > 0 ? ((quantitésPrécédentes[article.id] || 0) + quantitéActuelle) / article.quantity * 100 : 0;
-                                        const prixFinalCalculé = quantitéActuelle * article.unitPrice * (1 + (article.tvaRate || 0));
+                                        const quantitéPrécédente = quantitésPrécédentes[article.id] || 0;
+                                        const qteCumuléeCalculée = quantitéPrécédente + quantitéActuelle;
+                                        const prixFinalCalculé = qteCumuléeCalculée * article.unitPrice * (1 + (article.tvaRate || 0));
 
                                         return (
                                             <tr key={article.id}>
@@ -255,7 +318,7 @@ function DécompteForm() {
                                                 <td>{article.designation}</td>
                                                 <td>{article.unite}</td>
                                                 <td>{article.quantity}</td>
-                                                <td>{quantitésPrécédentes[article.id] || 0}</td>
+                                                <td>{quantitéPrécédente}</td>
                                                 <td>
                                                     <input
                                                         type="number"
@@ -265,26 +328,72 @@ function DécompteForm() {
                                                         className={styles.inputTable}
                                                     />
                                                 </td>
+                                                <td>{qteCumuléeCalculée}</td>
                                                 <td>{article.unitPrice}</td>
-                                                <td>{article.tvaRate}</td>
-                                                <td>
-                                                    <input
-                                                        type="number"
-                                                        value={pourcentagesRéalisation[article.id] !== undefined ? pourcentagesRéalisation[article.id] : Math.round(pourcentageRéalisationCalculé)}
-                                                        onChange={(e) => handlePourcentageChange(article.id, e)}
-                                                        min="0"
-                                                        max="100"
-                                                        className={styles.inputTable}
-                                                    />%
-                                                </td>
                                                 <td>{prixFinalCalculé.toFixed(2)}</td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
+                                {/* Footer pour les totaux HT, TVA et TTC */}
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="7" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total HT :</td>
+                                        <td colSpan="2" style={{ fontWeight: 'bold' }}>
+                                            {articlesProjet.reduce((total, article) => {
+                                                const quantitéActuelle = quantitésRéalisées[article.id] || 0;
+                                                const quantitéPrécédente = quantitésPrécédentes[article.id] || 0;
+                                                const qteCumuléeCalculée = quantitéPrécédente + quantitéActuelle;
+                                                return total + (qteCumuléeCalculée * article.unitPrice);
+                                            }, 0).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="7" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total TVA :</td>
+                                        <td colSpan="2" style={{ fontWeight: 'bold' }}>
+                                            {articlesProjet.reduce((total, article) => {
+                                                const quantitéActuelle = quantitésRéalisées[article.id] || 0;
+                                                const quantitéPrécédente = quantitésPrécédentes[article.id] || 0;
+                                                const qteCumuléeCalculée = quantitéPrécédente + quantitéActuelle;
+                                                return total + (qteCumuléeCalculée * article.unitPrice * (article.tvaRate || 0));
+                                            }, 0).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="7" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total TTC :</td>
+                                        <td colSpan="2" style={{ fontWeight: 'bold' }}>
+                                            {articlesProjet.reduce((total, article) => {
+                                                const quantitéActuelle = quantitésRéalisées[article.id] || 0;
+                                                const quantitéPrécédente = quantitésPrécédentes[article.id] || 0;
+                                                const qteCumuléeCalculée = quantitéPrécédente + quantitéActuelle;
+                                                return total + (qteCumuléeCalculée * article.unitPrice * (1 + (article.tvaRate || 0)));
+                                            }, 0).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
 
-                            <button type="submit" disabled={loadingArticles} className={styles.button}>
+                            <h3>Récapitulatif Financier TTC</h3>
+                            <table className={styles.recapTable}>
+                                <thead>
+                                    <tr>
+                                        <th>TTC Mois Précédent</th>
+                                        <th>TTC Mois Actuel</th>
+                                        <th>Reste</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{ttcPrécedent.toFixed(2)}</td>
+                                        <td>{ttcActuel.toFixed(2)}</td>
+                                        <td>{(ttcActuel - ttcPrécedent).toFixed(2)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <button type="submit" disabled={loadingArticles}
+                                className={styles.button}
+                            >
                                 Enregistrer le Décompte
                             </button>
                         </form>
@@ -302,3 +411,5 @@ function DécompteForm() {
 }
 
 export default DécompteForm;
+
+

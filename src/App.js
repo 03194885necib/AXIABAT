@@ -22,7 +22,7 @@ import JournalCHantier from './Components/JournalChantier/JournalCHantier.js'
 import ForgetPassword from './Pages/ForgetPassword'
 import Delais from './Components/gestion des delais/delais2'
 import Decompte from'./Components/Décompte/Décompte.js'
-
+import DecompteForm from './Components/Décompte/DécompteForm.js'
 function App() {  
   return (  
     <Routes>  
@@ -40,6 +40,8 @@ function App() {
 
        <Route path="/JournalCHantier" element={<JournalCHantier/>} />  
        <Route path="/Decompte" element={<Decompte/>} />  
+<Route path="/DecompteForm" element={<DecompteForm/>} />  
+
       <Route path="/template" element={<Template />}>  
       
       
