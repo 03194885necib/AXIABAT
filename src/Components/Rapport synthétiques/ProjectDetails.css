@@ -1,0 +1,27 @@
+.project-details {
+    padding: 20px;
+    background-color: #fefefe;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.project-details p {
+    margin: 5px 0;
+    color: #444;
+    font-size: 1em;
+    padding: 8px;
+    background-color: #f8f8f8;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.project-details p strong {
+    color: #333;
+    display: block; /* Make the label stand out on its own line */
+    font-size: 0.9em;
+    margin-bottom: 3px;
+}

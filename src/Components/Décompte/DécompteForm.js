@@ -747,7 +747,7 @@ useEffect(() => {
                     )}
 
                     <div className={styles.recapTable}>
-                        {/* <h3>Récapitulatif Financier TTC</h3>
+                        <h3>Récapitulatif Financier TTC</h3>
                         <table>
                             <thead>
                                 <tr>
@@ -763,13 +763,13 @@ useEffect(() => {
                                     <td>{(ttcActuel - ttcPrécedent).toFixed(2)}</td>
                                 </tr>
                             </tbody>
-                        </table> */}
+                        </table>
                     </div>
 
                     <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
                         <button type="submit" className={styles.button}>Enregistrer le Décompte</button>
                         <button type="button" onClick={exportToPDF} className={styles.button}>Exporter en PDF</button>
-                        {/* <button type="button" onClick={exportToExcel} className={styles.button}>Exporter en Excel</button> */}
+                        
                     </div>
                 </form>
 

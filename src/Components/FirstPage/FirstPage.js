@@ -51,7 +51,7 @@ const GESCOMP = () => {
           <div className="module-label">Tableau des bords</div>
         </div>
         <div className="module-card">
-          <div className="module-icon module-icon-settlement"></div>
+          <div className="module-icon module-icon-settlement" onClick={() => handleCardClick('/Rapport')}></div>
           <div className="module-label">Rapport synthétiques</div>
         </div>
       </div>

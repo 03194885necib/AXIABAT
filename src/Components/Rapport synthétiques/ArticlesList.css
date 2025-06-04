@@ -1,0 +1,47 @@
+.articles-list-container {
+    margin-top: 20px;
+    overflow-x: auto; /* Ensures table is scrollable on small screens */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #fefefe;
+}
+
+.articles-list-container table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px; /* Ensure table doesn't get too narrow */
+}
+
+.articles-list-container table th,
+.articles-list-container table td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap; /* Prevent text wrapping in cells */
+}
+
+.articles-list-container table th {
+    background-color: #eaf3f8;
+    color: #34495e;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85em;
+}
+
+.articles-list-container table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.articles-list-container table tbody tr:hover {
+    background-color: #eaf3f8;
+}
+
+/* Style for calculated columns - if you want to visually distinguish them */
+.articles-list-container table td:nth-child(6), /* Prix HT */
+.articles-list-container table td:nth-child(7), /* Montant TVA */
+.articles-list-container table td:nth-child(8) /* Prix TTC */ {
+    background-color: #f0f8ff; /* Light blue */
+    font-weight: bold;
+    color: #1f506e;
+}
