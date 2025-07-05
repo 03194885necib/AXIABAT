@@ -108,42 +108,8 @@ const DeadlineManagementCard = () => {
             setCaseTitle('');
         }
     };
-    const handleInputChange = (e) => {  
-        const { name, value } = e.target;  
-        
-        // Pour les champs de la table des arrêts de travaux  
-        if (name.includes('startDate-') || name.includes('endDate-') ||   
-            name.includes('duration-') || name.includes('reason-')) {  
-            const index = name.split('-')[1];  
-            const field = name.split('-')[0];  
-            
-            setWorkStoppages(prevStoppages =>   
-                prevStoppages.map((stoppage, i) =>   
-                    i === parseInt(index) ? { ...stoppage, [field]: value } : stoppage  
-                )  
-            );  
-        } else {  
-            switch (name) {  
-                case 'startDate':  
-                    setStartDate(value);  
-                    break;  
-                case 'contractualDeadline':  
-                    setContractualDeadline(value);  
-                    break;  
-                case 'actualEndDate':  
-                    setActualEndDate(value);  
-                    break;  
-                case 'dateFinReelle':  
-                    setDateFinReelle(value);  
-                    break;  
-                    // case 'duration':  
-                    // setDuration(value);  
-                    // break;  
-                default:  
-                    break;  
-            }  
-        }  
-    };  
+
+   
       
     const calculateInitialDateFinReelle = (startDate, contractualDays) => {
         const start = parseISO(startDate);
@@ -163,70 +129,126 @@ const DeadlineManagementCard = () => {
 
    
 
-    const handleSaveDeadline = async () => {
+    // const handleSaveDeadline = async () => {
 
-        const workStoppageDataToSave = showWorkStoppage
-        ? workStoppages.map((stoppage) => {
-              const startDate = stoppage.startDate ? parseISO(stoppage.startDate) : null;
-              const endDate = stoppage.endDate ? parseISO(stoppage.endDate) : null;
-              const duration = startDate && endDate ? differenceInDays(endDate, startDate) + 1 : 0;
-              let monthOfStoppage = '';
-            if (startDate) {
-                const startMonthYear = format(startDate, 'MMMM yyyy'); // Correction ici
-                if (endDate) {
-                    const endMonthYear = format(endDate, 'MMMM yyyy'); // Correction ici
-                    monthOfStoppage = startMonthYear === endMonthYear ? startMonthYear : `${startMonthYear} - ${endMonthYear}`;
-                } else {
-                    monthOfStoppage = startMonthYear;
-                }
-            }
+    //     const workStoppageDataToSave = showWorkStoppage
+    //     ? workStoppages.map((stoppage) => {
+    //           const startDate = stoppage.startDate ? parseISO(stoppage.startDate) : null;
+    //           const endDate = stoppage.endDate ? parseISO(stoppage.endDate) : null;
+    //           const duration = startDate && endDate ? differenceInDays(endDate, startDate) + 1 : 0;
+    //           let monthOfStoppage = '';
+    //         if (startDate) {
+    //             const startMonthYear = format(startDate, 'MMMM yyyy'); // Correction ici
+    //             if (endDate) {
+    //                 const endMonthYear = format(endDate, 'MMMM yyyy'); // Correction ici
+    //                 monthOfStoppage = startMonthYear === endMonthYear ? startMonthYear : `${startMonthYear} - ${endMonthYear}`;
+    //             } else {
+    //                 monthOfStoppage = startMonthYear;
+    //             }
+    //         }
            
 
 
-              return {
-                  // ... autres propriétés
-                  startDate: stoppage.startDate,
-                  endDate: stoppage.endDate,
-                  duration: duration, // Calculée au moment de l'enregistrement
-                  reason: stoppage.reason,
-                  monthOfStoppage: monthOfStoppage,
-                  // ...
-              };
-          })
-        : [];
+    //           return {
+    //               // ... autres propriétés
+    //               startDate: stoppage.startDate,
+    //               endDate: stoppage.endDate,
+    //               duration: duration, // Calculée au moment de l'enregistrement
+    //               reason: stoppage.reason,
+    //               monthOfStoppage: monthOfStoppage,
+    //               // ...
+    //           };
+    //       })
+    //     : [];
 
-        const deadlineData = {
-            projectId: selectedProject, // Utilisez projectId pour être plus explicite
+    //     const deadlineData = {
+    //         projectId: selectedProject, // Utilisez projectId pour être plus explicite
             
             
-            ...(showWorkProgress && {
-                workProgress: {
-                    dateDemarrage: dateDemarrage,
-                    delais: delais,
-                    description: progressDescription,
-                    percentage: progressPercentage,
-                },
-            }),
-            ...(showWorkStoppage && {
-                workStoppages: workStoppageDataToSave,
-            }),
-            timestamp: new Date(), 
-        };
-        console.log("Données à enregistrer dans Firebase:", deadlineData);
+    //         ...(showWorkProgress && {
+    //             workProgress: {
+    //                 dateDemarrage: dateDemarrage,
+    //                 delais: delais,
+    //                 description: progressDescription,
+    //                 percentage: progressPercentage,
+    //             },
+    //         }),
+    //         ...(showWorkStoppage && {
+    //             workStoppages: workStoppageDataToSave,
+    //         }),
+    //         timestamp: new Date(), 
+    //     };
+    //     console.log("Données à enregistrer dans Firebase:", deadlineData);
 
-        try {
-            const deadlinesCollectionRef = collection(db, 'deadlines'); // Référence à la collection 'deadlines'
-            const docRef = await addDoc(deadlinesCollectionRef, deadlineData);
-            console.log("ID du document ajouté:", docRef.id);
-            alert('Informations enregistrées avec succès dans Firebase!');
+    //     try {
+    //         const deadlinesCollectionRef = collection(db, 'deadlines'); // Référence à la collection 'deadlines'
+    //         const docRef = await addDoc(deadlinesCollectionRef, deadlineData);
+    //         console.log("ID du document ajouté:", docRef.id);
+    //         alert('Informations enregistrées avec succès dans Firebase!');
           
-        } catch (error) {
-            console.error("Erreur lors de l'enregistrement des informations dans Firebase:", error);
-            alert('Erreur lors de l\'enregistrement des informations dans Firebase.');
+    //     } catch (error) {
+    //         console.error("Erreur lors de l'enregistrement des informations dans Firebase:", error);
+    //         alert('Erreur lors de l\'enregistrement des informations dans Firebase.');
+    //     }
+    // };
+
+
+const handleSaveDeadline = async () => {
+  const workStoppageDataToSave = showWorkStoppage
+    ? workStoppages.map((stoppage) => {
+        const startDate = stoppage.startDate ? parseISO(stoppage.startDate) : null;
+        const endDate = stoppage.endDate ? parseISO(stoppage.endDate) : null;
+        const duration = startDate && endDate ? differenceInDays(endDate, startDate) + 1 : 0;
+        let monthOfStoppage = '';
+        if (startDate) {
+          const startMonthYear = format(startDate, 'MMMM yyyy');
+          if (endDate) {
+            const endMonthYear = format(endDate, 'MMMM yyyy');
+            monthOfStoppage = startMonthYear === endMonthYear ? startMonthYear : `${startMonthYear} - ${endMonthYear}`;
+          } else {
+            monthOfStoppage = startMonthYear;
+          }
         }
-    };
 
+        return {
+          startDate: stoppage.startDate,
+          endDate: stoppage.endDate,
+          duration: duration,
+          reason: stoppage.reason,
+          monthOfStoppage: monthOfStoppage,
+        };
+      })
+    : [];
 
+  const deadlineData = {
+    projectId: selectedProject,
+    dateFinReelle: dateFinReelle, // ✅ ENREGISTRER LA DATE FINALE REELLE
+    ...(showWorkProgress && {
+      workProgress: {
+        dateDemarrage: dateDemarrage,
+        delais: delais,
+        description: progressDescription,
+        percentage: progressPercentage,
+      },
+    }),
+    ...(showWorkStoppage && {
+      workStoppages: workStoppageDataToSave,
+    }),
+    timestamp: new Date(),
+  };
+
+  console.log("Données à enregistrer dans Firebase:", deadlineData);
+
+  try {
+    const deadlinesCollectionRef = collection(db, 'deadlines');
+    const docRef = await addDoc(deadlinesCollectionRef, deadlineData);
+    console.log("ID du document ajouté:", docRef.id);
+    alert('Informations enregistrées avec succès dans Firebase!');
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement des informations dans Firebase:", error);
+    alert("Erreur lors de l'enregistrement des informations dans Firebase.");
+  }
+};
 
 
     const handleAddStoppage = () => {

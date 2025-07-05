@@ -25,6 +25,8 @@ import Decompte from './Components/Décompte/Décompte.js'
 import DecompteForm from './Components/Décompte/DécompteForm.js'
 import Rapport from './Components/Rapport/Rapport.js'
 import ImporterRapport from './Components/Rapport/Importer/ImportProjectPage.js'
+import DashboardDelai from './Components/Dashboard/DashboardDelai.js'
+import BudgetDashboard from './Components/Dashboard/BudgetDashboard.js'
 function App() {
   return (
     <Routes>
@@ -43,9 +45,11 @@ function App() {
       <Route path="/JournalCHantier" element={<JournalCHantier />} />
       <Route path="/Decompte" element={<Decompte />} />
       <Route path="/DecompteForm" element={<DecompteForm />} />
-      
-      <Route path="/Rapport" element={<Rapport/>} />
- <Route path="/ImporterRapport" element={<ImporterRapport/>} />
+      <Route path="BudgetDashboard" element={<BudgetDashboard />}/> 
+      <Route path="/DashboardDelai" element={<DashboardDelai />} />
+
+      <Route path="/Rapport" element={<Rapport />} />
+      <Route path="/ImporterRapport" element={<ImporterRapport />} />
 
       <Route path="/template" element={<Template />}>
 
