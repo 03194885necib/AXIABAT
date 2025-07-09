@@ -20,13 +20,17 @@ import ListeArticle from './Components/FicheProjet/ListeArticle/ListeArticle'
 import MesArticles from './Components/Articles/Articles'
 import JournalCHantier from './Components/JournalChantier/JournalCHantier.js'
 import ForgetPassword from './Pages/ForgetPassword'
-import Delais from './Components/gestion des delais/delais2'
+import Delais from './Components/gestion des delais/Delais3.js'
 import Decompte from './Components/Décompte/Décompte.js'
 import DecompteForm from './Components/Décompte/DécompteForm.js'
 import Rapport from './Components/Rapport/Rapport.js'
 import ImporterRapport from './Components/Rapport/Importer/ImportProjectPage.js'
 import DashboardDelai from './Components/Dashboard/DashboardDelai.js'
 import BudgetDashboard from './Components/Dashboard/BudgetDashboard.js'
+import GlobalDash from './Components/Dashboard/GlobalDash/GlobalDash.js'
+import DashDecompte from'./Components/Dashboard/Decomptes/DécompteDash.js'
+import TabComp from './Components/Dashboard/Decomptes/TableauComparatif/TabCom.js'
+import DashDelais from './Components/gestion des delais/DashboardDeadline.js'
 function App() {
   return (
     <Routes>
@@ -39,6 +43,13 @@ function App() {
       <Route path="TestProjet" element={<TestProjet />} />
       <Route path="/FicheProjet" element={<FicheProjet />} />
       <Route path="/MesArticles" element={<MesArticles />} />
+      <Route path="/GlobalDash" element={<GlobalDash />} />
+      <Route path="/DashDecompte" element={<DashDecompte />} />
+
+      <Route path="/TabComp" element={<TabComp />} />
+
+      {/* Dashboards */}
+       <Route path="/DashDelais" element={<DashDelais />} />
 
       <Route path="/ListeArticle" element={<ListeArticle />} />
 

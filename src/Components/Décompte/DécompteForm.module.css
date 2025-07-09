@@ -325,3 +325,45 @@ button:disabled {
 .error {
     color: red;
 }
+
+.buttonContainer {
+    text-align: center; /* Center the button */
+    margin-bottom: 20px; /* Give it some space below */
+}
+
+.secondaryButton {
+    background-color: #6c757d; /* A grey color for a secondary action */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.secondaryButton:hover {
+    background-color: #5a6268; /* Darken on hover */
+}
+
+.secondaryButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* You might want to adjust existing .button if it's too similar */
+.button {
+    background-color: #007bff; /* Primary action button */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease;
+    margin-top: 20px; /* Add some space above the submit button */
+}
+
+.button:hover {
+    background-color: #0056b3;
+}

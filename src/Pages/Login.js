@@ -12,6 +12,9 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
+
+
+    console.log(email,password)
     e.preventDefault(); 
 
     if (!email || !password) {

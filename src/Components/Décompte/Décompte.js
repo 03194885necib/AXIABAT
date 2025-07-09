@@ -3,6 +3,7 @@ import { collection, getDocs, doc, setDoc, Timestamp, query, where, addDoc } fro
 import { db } from '../../firebase';
 
 import styles from './DécompteForm.module.css';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 function DécompteForm() {
     const [projets, setProjets] = useState([]);
@@ -18,7 +19,7 @@ function DécompteForm() {
     const [submissionStatus, setSubmissionStatus] = useState(null);
     const [ttcPrécedent, setTtcPrécedent] = useState(0);
     const [ttcActuel, setTtcActuel] = useState(0);
-
+  const navigate=useNavigate()
     useEffect(() => {
         const fetchProjets = async () => {
             try {
@@ -238,7 +239,9 @@ console.log(décompteData)
             setSubmissionStatus({ type: 'error', message: 'Erreur lors de l\'enregistrement du décompte et des articles.' });
         }
     };
-
+  const handleGoToComparison = () => {
+        navigate('/ProjectComparison'); // This should match the route in your App.js
+    };
     return (
         <div className={styles.container}>
             <h2>Créer un Décompte Mensuel</h2>
@@ -260,6 +263,12 @@ console.log(décompteData)
             )}
 
             {selectedProjetId && (
+                <>
+                   <div className={styles.buttonContainer}> {/* Add a container for styling if needed */}
+                        <button type="button" onClick={handleGoToComparison} className={styles.secondaryButton}>
+                            Voir le Tableau Comparatif
+                        </button>
+                    </div>
                 <div>
                     <div className={styles.formGroup}>
                         <label htmlFor="moisDécompte">Mois du décompte :</label>
@@ -399,6 +408,7 @@ console.log(décompteData)
                         </form>
                     )}
                 </div>
+                </>
             )}
 
             {submissionStatus && (
