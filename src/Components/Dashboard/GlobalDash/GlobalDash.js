@@ -47,9 +47,9 @@ function Dashboard() {
           <ul>
             <li 
               className={activeTab === 'dashboard' ? styles.active : ''}
-              onClick={() => handleNavigation('/dashboard')}
+              onClick={() => handleNavigation('/GlobalDash')}
             >
-              <span>📊</span> Tableau de bord
+              <span>💼</span> Tableau de bord
             </li>
             <li 
               className={activeTab === 'decomptes' ? styles.active : ''}
@@ -62,7 +62,7 @@ function Dashboard() {
               className={activeTab === 'decomptes' ? styles.active : ''}
               onClick={() => handleNavigation('/TabComp')}
             >
-              <span>💼​</span> Tableau comparatif
+              <span>📊​</span> Tableau comparatif
             </li>
 
 
@@ -72,7 +72,7 @@ function Dashboard() {
             
               <span>🏗️</span> Delais 
               </li>
-            <li 
+            {/* <li 
               className={activeTab === 'comparison' ? styles.active : ''}
               onClick={() => handleNavigation('/ProjectComparison')}
             >
@@ -83,7 +83,7 @@ function Dashboard() {
               onClick={() => handleNavigation('/DashDelais')}
             >
               <span>⚙️</span> Paramètres
-            </li>
+            </li> */}
           </ul>
         </nav>
       </div>

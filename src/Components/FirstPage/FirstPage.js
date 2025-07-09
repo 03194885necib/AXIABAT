@@ -47,19 +47,20 @@ const GESCOMP = () => {
           <div className="module-icon module-icon-financial-transactions" onClick={() => handleCardClick('/DecompteForm')}></div>
           <div className="module-label">  Suivie budgutaire</div>
         </div>
-        <div className="module-card">
+        {/* <div className="module-card">
           <div className="module-icon module-icon-monitoring-followup" onClick={() => handleCardClick('/DashboardDelai')}></div>
           <div className="module-label">Tableau des bords</div>
-        </div>
-        <div className="module-card">
-          <div className="module-icon module-icon-settlement" onClick={() => handleCardClick('/Rapport')}></div>
-          <div className="module-label">Rapport synthétiques</div>
-        </div>
+        </div> */}
         <div className="module-card">    
 
           <div className="module-icon module-icon-monitoring-followup" onClick={() => handleCardClick('/GlobalDash')}></div>
           <div className="module-label">Tableau des bords 2</div>
         </div>
+        <div className="module-card">
+          <div className="module-icon module-icon-settlement" onClick={() => handleCardClick('/Rapport')}></div>
+          <div className="module-label">Rapport synthétiques</div>
+        </div>
+        
       </div>
     </div>
   );
