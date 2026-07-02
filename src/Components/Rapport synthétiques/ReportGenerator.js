@@ -1,5 +1,6 @@
 import React from 'react';
-import html2pdf from 'html2pdf.js'; // You need to install this: npm install html2pdf.js
+// html2pdf.js unavailable (blocked by security policy — depends on jspdf)
+const html2pdf = () => ({ from: () => ({ set: () => ({ save: () => alert('PDF export is currently unavailable.') }) }) });
 
 const ReportGenerator = ({ contentRef, projectName }) => {
 

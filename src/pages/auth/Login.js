@@ -1,0 +1,160 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+const C = {
+  primary: "#1e3a5f",
+  accent: "#f59e0b",
+  danger: "#ef4444",
+  text: "#1e293b",
+  muted: "#64748b",
+  border: "#e2e8f0",
+  bg: "#f8fafc",
+  white: "#ffffff",
+};
+
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!email || !password) {
+      setError("Veuillez remplir tous les champs.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate("/FirstPage");
+    } catch {
+      setError("Email ou mot de passe incorrect.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={s.page}>
+      <div style={s.brand}>
+        <div style={s.brandInner}>
+          <div style={s.logo}>
+            <span style={s.logoIcon}>⬡</span>
+            <span style={s.logoText}>AXIABAT</span>
+          </div>
+          <p style={s.tagline}>Plateforme de gestion intégrée des projets BTP</p>
+          <div style={s.features}>
+            {[
+              { icon: "📋", label: "Gestion de projets" },
+              { icon: "📊", label: "Tableaux de bord KPIs" },
+              { icon: "⏱️", label: "Suivi des délais" },
+              { icon: "💰", label: "Suivi financier" },
+            ].map((f) => (
+              <div key={f.label} style={s.feature}>
+                <span style={s.featureIcon}>{f.icon}</span>
+                <span style={s.featureLabel}>{f.label}</span>
+              </div>
+            ))}
+          </div>
+          <p style={s.brandFooter}>Ingénierie · Digitalisation · Performance</p>
+        </div>
+      </div>
+
+      <div style={s.formPanel}>
+        <div style={s.formCard}>
+          <h1 style={s.title}>Connexion</h1>
+          <p style={s.subtitle}>Accédez à votre espace de travail</p>
+
+          {error && <div style={s.alert}>{error}</div>}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={s.field}>
+              <label style={s.label}>Adresse e-mail</label>
+              <input
+                type="email"
+                style={s.input}
+                placeholder="nom@entreprise.dz"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+
+            <div style={s.field}>
+              <label style={s.label}>Mot de passe</label>
+              <div style={s.inputWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  style={{ ...s.input, paddingRight: 48 }}
+                  placeholder="Votre mot de passe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  style={s.eyeBtn}
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+
+            <div style={s.forgotRow}>
+              <Link to="/forgot-password" style={s.link}>
+                Mot de passe oublié ?
+              </Link>
+            </div>
+
+            <button type="submit" style={s.btn} disabled={loading}>
+              {loading ? "Connexion en cours..." : "Se connecter"}
+            </button>
+          </form>
+
+          <p style={s.footer}>
+            Pas encore de compte ?{" "}
+            <Link to="/signup" style={s.link}>Créer un compte</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const s = {
+  page: { display: "flex", minHeight: "100vh", fontFamily: "'Inter', -apple-system, sans-serif" },
+  brand: { flex: 1, background: "linear-gradient(145deg, #1e3a5f 0%, #0f2744 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 48 },
+  brandInner: { maxWidth: 400, color: "#ffffff" },
+  logo: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
+  logoIcon: { fontSize: 40, color: "#f59e0b" },
+  logoText: { fontSize: 32, fontWeight: 800, letterSpacing: 2, color: "#ffffff" },
+  tagline: { fontSize: 18, color: "rgba(255,255,255,0.75)", lineHeight: 1.5, marginBottom: 40 },
+  features: { display: "flex", flexDirection: "column", gap: 16, marginBottom: 48 },
+  feature: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "rgba(255,255,255,0.07)", borderRadius: 10, borderLeft: "3px solid #f59e0b" },
+  featureIcon: { fontSize: 20 },
+  featureLabel: { fontSize: 15, color: "rgba(255,255,255,0.9)" },
+  brandFooter: { fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: 1.5, textTransform: "uppercase" },
+  formPanel: { flex: 1, background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: 32 },
+  formCard: { background: "#ffffff", borderRadius: 16, padding: 40, width: "100%", maxWidth: 420, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0" },
+  title: { fontSize: 26, fontWeight: 700, color: C.text, marginBottom: 8, marginTop: 0 },
+  subtitle: { fontSize: 14, color: C.muted, marginBottom: 28, marginTop: 0 },
+  alert: { background: "#fef2f2", border: "1px solid #fecaca", color: C.danger, borderRadius: 8, padding: "10px 14px", fontSize: 14, marginBottom: 20 },
+  field: { marginBottom: 20 },
+  label: { display: "block", fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 6 },
+  input: { width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, color: C.text, outline: "none", boxSizing: "border-box", background: "#ffffff" },
+  inputWrapper: { position: "relative" },
+  eyeBtn: { position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 4 },
+  forgotRow: { textAlign: "right", marginBottom: 24, marginTop: -8 },
+  link: { color: C.primary, fontWeight: 600, textDecoration: "none", fontSize: 13 },
+  btn: { width: "100%", padding: "12px 0", background: C.primary, color: "#ffffff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 4 },
+  footer: { textAlign: "center", fontSize: 13, color: C.muted, marginTop: 24, marginBottom: 0 },
+};

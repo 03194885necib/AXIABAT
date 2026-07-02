@@ -1,0 +1,48 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+const C = {
+  primary: "#1e3a5f",
+  text: "#1e293b",
+  muted: "#64748b",
+  bg: "#f8fafc",
+  white: "#ffffff",
+};
+
+export default function Unauthorized() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  return (
+    <div style={s.page}>
+      <div style={s.card}>
+        <span style={s.icon}>🚫</span>
+        <h1 style={s.title}>Accès refusé</h1>
+        <p style={s.text}>
+          Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+          Contactez un administrateur AXIABAT pour obtenir les droits requis.
+        </p>
+        <div style={s.actions}>
+          <button style={s.btnPrimary} onClick={() => navigate("/FirstPage")}>
+            Retour au tableau de bord
+          </button>
+          <button style={s.btnSecondary} onClick={logout}>
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const s = {
+  page: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: C.bg, fontFamily: "'Inter', -apple-system, sans-serif" },
+  card: { background: C.white, borderRadius: 20, padding: 48, maxWidth: 440, textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" },
+  icon: { fontSize: 56, display: "block", marginBottom: 20 },
+  title: { fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 12, marginTop: 0 },
+  text: { fontSize: 15, color: C.muted, lineHeight: 1.6, marginBottom: 32, marginTop: 0 },
+  actions: { display: "flex", flexDirection: "column", gap: 12 },
+  btnPrimary: { padding: "12px 24px", background: C.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: "pointer" },
+  btnSecondary: { padding: "12px 24px", background: "transparent", color: C.muted, border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 15, cursor: "pointer" },
+};

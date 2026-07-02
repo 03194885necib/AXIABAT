@@ -1,0 +1,103 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+const C = {
+  primary: "#1e3a5f",
+  danger: "#ef4444",
+  text: "#1e293b",
+  muted: "#64748b",
+  border: "#e2e8f0",
+  white: "#ffffff",
+};
+
+export default function ForgotPassword() {
+  const { resetPassword } = useAuth();
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setStatus("error");
+      setMessage("Veuillez saisir votre adresse email.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await resetPassword(email);
+      setStatus("success");
+      setMessage("Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.");
+    } catch {
+      setStatus("error");
+      setMessage("Aucun compte trouvé avec cet email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={s.iconWrapper}>
+          <span style={s.icon}>🔐</span>
+        </div>
+        <h1 style={s.title}>Mot de passe oublié</h1>
+        <p style={s.subtitle}>
+          Saisissez votre email et nous vous enverrons un lien de réinitialisation.
+        </p>
+
+        {status === "success" && (
+          <div style={{ ...s.alert, ...s.alertSuccess }}>✅ {message}</div>
+        )}
+        {status === "error" && (
+          <div style={{ ...s.alert, ...s.alertError }}>❌ {message}</div>
+        )}
+
+        {status !== "success" && (
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={s.field}>
+              <label style={s.label}>Adresse e-mail</label>
+              <input
+                type="email"
+                style={s.input}
+                placeholder="votre@email.dz"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+            <button type="submit" style={s.btn} disabled={loading}>
+              {loading ? "Envoi en cours..." : "Envoyer le lien"}
+            </button>
+          </form>
+        )}
+
+        <div style={s.links}>
+          <Link to="/login" style={s.link}>← Retour à la connexion</Link>
+          <Link to="/signup" style={s.link}>Créer un compte</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const s = {
+  page: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "linear-gradient(145deg, #1e3a5f 0%, #0f2744 100%)", fontFamily: "'Inter', -apple-system, sans-serif", padding: 24 },
+  card: { background: "#ffffff", borderRadius: 20, padding: "48px 40px", width: "100%", maxWidth: 420, boxShadow: "0 20px 60px rgba(0,0,0,0.25)", textAlign: "center" },
+  iconWrapper: { width: 72, height: 72, background: "#eff6ff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" },
+  icon: { fontSize: 32 },
+  title: { fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 8, marginTop: 0 },
+  subtitle: { fontSize: 14, color: C.muted, marginBottom: 28, lineHeight: 1.6, marginTop: 0 },
+  alert: { borderRadius: 8, padding: "12px 16px", fontSize: 14, marginBottom: 20, textAlign: "left" },
+  alertSuccess: { background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534" },
+  alertError: { background: "#fef2f2", border: "1px solid #fecaca", color: C.danger },
+  field: { marginBottom: 20, textAlign: "left" },
+  label: { display: "block", fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 6 },
+  input: { width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", background: "#ffffff" },
+  btn: { width: "100%", padding: "12px 0", background: C.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 4 },
+  links: { display: "flex", justifyContent: "space-between", marginTop: 24 },
+  link: { color: C.primary, fontSize: 13, fontWeight: 600, textDecoration: "none" },
+};

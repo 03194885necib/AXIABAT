@@ -1,0 +1,315 @@
+import React, { useState } from "react";
+import { useUsers } from "../../hooks/useUsers";
+import { ROLES, ROLE_LABELS } from "../../context/AuthContext";
+
+const C = {
+  primary: "#1e3a5f",
+  accent: "#f59e0b",
+  danger: "#ef4444",
+  success: "#10b981",
+  warning: "#f59e0b",
+  text: "#1e293b",
+  muted: "#64748b",
+  border: "#e2e8f0",
+  bg: "#f8fafc",
+  white: "#ffffff",
+};
+
+const ROLE_COLORS = {
+  admin: { bg: "#fef3c7", color: "#92400e" },
+  chef_projet: { bg: "#dbeafe", color: "#1e40af" },
+  conducteur: { bg: "#d1fae5", color: "#065f46" },
+  viewer: { bg: "#f1f5f9", color: "#475569" },
+};
+
+export default function UserManagement() {
+  const { users, loading, error, createUser, updateUserRole, toggleUserStatus, deleteUser } = useUsers();
+  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [form, setForm] = useState({ displayName: "", email: "", poste: "", password: "", role: ROLES.VIEWER });
+  const [formError, setFormError] = useState("");
+  const [formLoading, setFormLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!form.displayName || !form.email || !form.password) {
+      setFormError("Nom, email et mot de passe sont requis.");
+      return;
+    }
+    setFormError("");
+    setFormLoading(true);
+    const result = await createUser(form);
+    setFormLoading(false);
+    if (result.success) {
+      setShowForm(false);
+      setForm({ displayName: "", email: "", poste: "", password: "", role: ROLES.VIEWER });
+      showToast("Utilisateur créé avec succès.");
+    } else {
+      setFormError(result.error || "Erreur lors de la création.");
+    }
+  };
+
+  const handleRoleChange = async (uid, newRole) => {
+    const result = await updateUserRole(uid, newRole);
+    if (result.success) showToast("Rôle mis à jour.");
+    else showToast("Erreur lors de la mise à jour.", "error");
+  };
+
+  const handleToggle = async (uid, currentStatus) => {
+    const result = await toggleUserStatus(uid, currentStatus);
+    if (result.success) showToast(currentStatus ? "Compte désactivé." : "Compte activé.");
+    else showToast("Erreur.", "error");
+  };
+
+  const handleDelete = async (uid, name) => {
+    if (!window.confirm(`Supprimer l'utilisateur "${name}" ?`)) return;
+    const result = await deleteUser(uid);
+    if (result.success) showToast("Utilisateur supprimé.");
+    else showToast("Erreur lors de la suppression.", "error");
+  };
+
+  const filtered = users.filter((u) => {
+    const matchSearch =
+      u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase());
+    const matchRole = filterRole === "all" || u.role === filterRole;
+    return matchSearch && matchRole;
+  });
+
+  const stats = [
+    { label: "Total", value: users.length, color: C.primary },
+    { label: "Admins", value: users.filter((u) => u.role === "admin").length, color: "#7c3aed" },
+    { label: "Actifs", value: users.filter((u) => u.actif).length, color: C.success },
+    { label: "Inactifs", value: users.filter((u) => !u.actif).length, color: C.danger },
+  ];
+
+  return (
+    <div style={s.page}>
+      {toast && (
+        <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
+          {toast.msg}
+        </div>
+      )}
+
+      <div style={s.header}>
+        <div>
+          <h1 style={s.pageTitle}>Gestion des utilisateurs</h1>
+          <p style={s.pageSubtitle}>Gérez les accès et permissions de la plateforme AXIABAT</p>
+        </div>
+        <button style={s.btnPrimary} onClick={() => setShowForm(true)}>
+          + Nouvel utilisateur
+        </button>
+      </div>
+
+      <div style={s.statsRow}>
+        {stats.map((stat) => (
+          <div key={stat.label} style={s.statCard}>
+            <div style={{ ...s.statValue, color: stat.color }}>{stat.value}</div>
+            <div style={s.statLabel}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={s.filters}>
+        <input
+          type="text"
+          style={s.searchInput}
+          placeholder="Rechercher un utilisateur..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select style={s.select} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+          <option value="all">Tous les rôles</option>
+          {Object.entries(ROLE_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+      </div>
+
+      {showForm && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <div style={s.modalHeader}>
+              <h2 style={s.modalTitle}>Nouvel utilisateur</h2>
+              <button style={s.closeBtn} onClick={() => setShowForm(false)}>✕</button>
+            </div>
+            {formError && <div style={s.alertErr}>{formError}</div>}
+            <form onSubmit={handleCreate} noValidate>
+              <div style={s.formRow}>
+                <div style={s.field}>
+                  <label style={s.label}>Nom complet *</label>
+                  <input style={s.input} type="text" placeholder="Prénom NOM"
+                    value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
+                </div>
+                <div style={s.field}>
+                  <label style={s.label}>Poste / Fonction</label>
+                  <input style={s.input} type="text" placeholder="Chef de projet..."
+                    value={form.poste} onChange={(e) => setForm({ ...form, poste: e.target.value })} />
+                </div>
+              </div>
+              <div style={s.field}>
+                <label style={s.label}>Adresse e-mail *</label>
+                <input style={s.input} type="email" placeholder="email@entreprise.dz"
+                  value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div style={s.formRow}>
+                <div style={s.field}>
+                  <label style={s.label}>Mot de passe *</label>
+                  <input style={s.input} type="password" placeholder="6 caractères minimum"
+                    value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                </div>
+                <div style={s.field}>
+                  <label style={s.label}>Rôle *</label>
+                  <select style={s.input} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                    {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div style={s.modalFooter}>
+                <button type="button" style={s.btnSecondary} onClick={() => setShowForm(false)}>Annuler</button>
+                <button type="submit" style={s.btnPrimary} disabled={formLoading}>
+                  {formLoading ? "Création..." : "Créer l'utilisateur"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div style={s.center}>Chargement...</div>
+      ) : error ? (
+        <div style={s.alertErr}>{error}</div>
+      ) : (
+        <div style={s.tableWrapper}>
+          <table style={s.table}>
+            <thead>
+              <tr style={s.thead}>
+                <th style={s.th}>Utilisateur</th>
+                <th style={s.th}>Poste</th>
+                <th style={s.th}>Rôle</th>
+                <th style={s.th}>Statut</th>
+                <th style={s.th}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ ...s.td, textAlign: "center", color: C.muted }}>
+                    Aucun utilisateur trouvé
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((user) => (
+                  <tr key={user.id} style={s.tr}>
+                    <td style={s.td}>
+                      <div style={s.userCell}>
+                        <div style={s.avatar}>
+                          {(user.displayName || user.email || "?")[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={s.userName}>{user.displayName || "—"}</div>
+                          <div style={s.userEmail}>{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={s.td}><span style={s.poste}>{user.poste || "—"}</span></td>
+                    <td style={s.td}>
+                      <select
+                        style={{ ...s.roleBadge, ...ROLE_COLORS[user.role] }}
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      >
+                        {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={s.td}>
+                      <span style={{ ...s.badge, ...(user.actif ? s.badgeActive : s.badgeInactive) }}>
+                        {user.actif ? "Actif" : "Inactif"}
+                      </span>
+                    </td>
+                    <td style={s.td}>
+                      <div style={s.actions}>
+                        <button
+                          style={{ ...s.actionBtn, color: user.actif ? C.warning : C.success }}
+                          onClick={() => handleToggle(user.id, user.actif)}
+                          title={user.actif ? "Désactiver" : "Activer"}
+                        >
+                          {user.actif ? "⏸" : "▶"}
+                        </button>
+                        <button
+                          style={{ ...s.actionBtn, color: C.danger }}
+                          onClick={() => handleDelete(user.id, user.displayName)}
+                          title="Supprimer"
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const s = {
+  page: { padding: 32, fontFamily: "'Inter', -apple-system, sans-serif", maxWidth: 1200, margin: "0 auto" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 },
+  pageTitle: { fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 4, marginTop: 0 },
+  pageSubtitle: { fontSize: 14, color: C.muted, marginTop: 0 },
+  btnPrimary: { padding: "10px 20px", background: C.primary, color: C.white, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  btnSecondary: { padding: "10px 20px", background: C.white, color: C.text, border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  statsRow: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 },
+  statCard: { background: C.white, border: "1px solid #e2e8f0", borderRadius: 12, padding: "20px 24px", textAlign: "center" },
+  statValue: { fontSize: 32, fontWeight: 800, lineHeight: 1 },
+  statLabel: { fontSize: 13, color: C.muted, marginTop: 4 },
+  filters: { display: "flex", gap: 12, marginBottom: 20 },
+  searchInput: { flex: 1, padding: "9px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", background: C.white },
+  select: { padding: "9px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, background: C.white, outline: "none" },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 },
+  modal: { background: C.white, borderRadius: 16, padding: 32, width: "100%", maxWidth: 560, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" },
+  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
+  modalTitle: { fontSize: 20, fontWeight: 700, color: C.text, margin: 0 },
+  closeBtn: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: C.muted },
+  modalFooter: { display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 24 },
+  formRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
+  field: { marginBottom: 16 },
+  label: { display: "block", fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 6 },
+  input: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", background: C.white },
+  alertErr: { background: "#fef2f2", border: "1px solid #fecaca", color: C.danger, borderRadius: 8, padding: "10px 14px", fontSize: 14, marginBottom: 16 },
+  tableWrapper: { background: C.white, border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" },
+  table: { width: "100%", borderCollapse: "collapse" },
+  thead: { background: C.bg },
+  th: { padding: "12px 16px", textAlign: "left", fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, borderBottom: "1px solid #e2e8f0" },
+  tr: { borderBottom: "1px solid #e2e8f0" },
+  td: { padding: "14px 16px", fontSize: 14, color: C.text, verticalAlign: "middle" },
+  userCell: { display: "flex", alignItems: "center", gap: 12 },
+  avatar: { width: 36, height: 36, borderRadius: "50%", background: C.primary, color: C.white, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 },
+  userName: { fontWeight: 600, color: C.text },
+  userEmail: { fontSize: 12, color: C.muted },
+  poste: { fontSize: 13, color: C.muted },
+  roleBadge: { padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" },
+  badge: { padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600 },
+  badgeActive: { background: "#d1fae5", color: "#065f46" },
+  badgeInactive: { background: "#fef2f2", color: "#991b1b" },
+  actions: { display: "flex", gap: 8 },
+  actionBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 4, borderRadius: 6 },
+  center: { textAlign: "center", padding: 40, color: C.muted },
+  toast: { position: "fixed", bottom: 24, right: 24, color: C.white, padding: "12px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
+};

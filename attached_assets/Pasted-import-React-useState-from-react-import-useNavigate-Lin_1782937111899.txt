@@ -1,0 +1,173 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../../firebase";
+import { ROLES } from "../../context/AuthContext";
+
+const C = {
+  primary: "#1e3a5f",
+  accent: "#f59e0b",
+  danger: "#ef4444",
+  text: "#1e293b",
+  muted: "#64748b",
+  border: "#e2e8f0",
+  bg: "#f8fafc",
+  white: "#ffffff",
+};
+
+export default function SignUp() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    displayName: "",
+    email: "",
+    poste: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const validate = () => {
+    if (!form.displayName.trim()) return "Le nom complet est requis.";
+    if (!form.email.trim()) return "L'adresse email est requise.";
+    if (form.password.length < 6) return "Le mot de passe doit contenir au moins 6 caractères.";
+    if (form.password !== form.confirmPassword) return "Les mots de passe ne correspondent pas.";
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validationError = validate();
+    if (validationError) { setError(validationError); return; }
+    setError("");
+    setLoading(true);
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const uid = credential.user.uid;
+      await updateProfile(credential.user, { displayName: form.displayName });
+      await setDoc(doc(db, "users", uid), {
+        uid,
+        email: form.email,
+        displayName: form.displayName,
+        poste: form.poste,
+        role: ROLES.VIEWER,
+        actif: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      navigate("/FirstPage");
+    } catch (err) {
+      if (err.code === "auth/email-already-in-use") {
+        setError("Cet email est déjà utilisé.");
+      } else {
+        setError("Une erreur est survenue. Veuillez réessayer.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={s.page}>
+      <div style={s.brand}>
+        <div style={s.brandInner}>
+          <div style={s.logo}>
+            <span style={s.logoIcon}>⬡</span>
+            <span style={s.logoText}>AXIABAT</span>
+          </div>
+          <p style={s.tagline}>Rejoignez la plateforme de gestion BTP</p>
+          <div style={s.infoBox}>
+            <p style={s.infoTitle}>Après votre inscription :</p>
+            <ul style={s.infoList}>
+              <li>Votre compte sera activé avec le rôle Lecteur</li>
+              <li>Un administrateur peut modifier vos permissions</li>
+              <li>Vous aurez accès aux modules selon votre rôle</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style={s.formPanel}>
+        <div style={s.formCard}>
+          <h1 style={s.title}>Créer un compte</h1>
+          <p style={s.subtitle}>Remplissez vos informations professionnelles</p>
+
+          {error && <div style={s.alert}>{error}</div>}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={s.row}>
+              <div style={s.field}>
+                <label style={s.label}>Nom complet *</label>
+                <input name="displayName" type="text" style={s.input}
+                  placeholder="Prénom NOM" value={form.displayName} onChange={handleChange} />
+              </div>
+              <div style={s.field}>
+                <label style={s.label}>Poste / Fonction</label>
+                <input name="poste" type="text" style={s.input}
+                  placeholder="Ingénieur BTP..." value={form.poste} onChange={handleChange} />
+              </div>
+            </div>
+
+            <div style={s.field}>
+              <label style={s.label}>Adresse e-mail *</label>
+              <input name="email" type="email" style={s.input}
+                placeholder="nom@entreprise.dz" value={form.email} onChange={handleChange} />
+            </div>
+
+            <div style={s.row}>
+              <div style={s.field}>
+                <label style={s.label}>Mot de passe *</label>
+                <input name="password" type="password" style={s.input}
+                  placeholder="6 caractères minimum" value={form.password} onChange={handleChange} />
+              </div>
+              <div style={s.field}>
+                <label style={s.label}>Confirmer *</label>
+                <input name="confirmPassword" type="password" style={s.input}
+                  placeholder="Répétez le mot de passe" value={form.confirmPassword} onChange={handleChange} />
+              </div>
+            </div>
+
+            <button type="submit" style={s.btn} disabled={loading}>
+              {loading ? "Création en cours..." : "Créer mon compte"}
+            </button>
+          </form>
+
+          <p style={s.footer}>
+            Déjà inscrit ?{" "}
+            <Link to="/login" style={s.link}>Se connecter</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const s = {
+  page: { display: "flex", minHeight: "100vh", fontFamily: "'Inter', -apple-system, sans-serif" },
+  brand: { flex: "0 0 380px", background: "linear-gradient(145deg, #1e3a5f 0%, #0f2744 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 48 },
+  brandInner: { color: "#ffffff" },
+  logo: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
+  logoIcon: { fontSize: 40, color: "#f59e0b" },
+  logoText: { fontSize: 28, fontWeight: 800, letterSpacing: 2 },
+  tagline: { fontSize: 16, color: "rgba(255,255,255,0.75)", lineHeight: 1.5, marginBottom: 32 },
+  infoBox: { background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: 20, borderLeft: "3px solid #f59e0b" },
+  infoTitle: { fontSize: 14, fontWeight: 600, marginBottom: 12, marginTop: 0 },
+  infoList: { margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 8 },
+  formPanel: { flex: 1, background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: 32 },
+  formCard: { background: "#ffffff", borderRadius: 16, padding: 40, width: "100%", maxWidth: 560, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0" },
+  title: { fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 8, marginTop: 0 },
+  subtitle: { fontSize: 14, color: C.muted, marginBottom: 28, marginTop: 0 },
+  alert: { background: "#fef2f2", border: "1px solid #fecaca", color: C.danger, borderRadius: 8, padding: "10px 14px", fontSize: 14, marginBottom: 20 },
+  row: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
+  field: { marginBottom: 20 },
+  label: { display: "block", fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 6 },
+  input: { width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, color: C.text, outline: "none", boxSizing: "border-box", background: "#ffffff" },
+  btn: { width: "100%", padding: "12px 0", background: C.primary, color: "#ffffff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 4 },
+  footer: { textAlign: "center", fontSize: 13, color: C.muted, marginTop: 24, marginBottom: 0 },
+  link: { color: C.primary, fontWeight: 600, textDecoration: "none" },
+};

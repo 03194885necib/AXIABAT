@@ -15,7 +15,9 @@ let toggle = document.querySelector(".toggle");
 let navigation = document.querySelector(".navigation");
 let main = document.querySelector(".main");
 
-toggle.onclick = function () {
-  navigation.classList.toggle("active");
-  main.classList.toggle("active");
-};
+if (toggle) {
+  toggle.onclick = function () {
+    if (navigation) navigation.classList.toggle("active");
+    if (main) main.classList.toggle("active");
+  };
+}

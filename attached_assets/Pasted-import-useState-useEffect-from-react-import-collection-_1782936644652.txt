@@ -1,0 +1,113 @@
+import { useState, useEffect } from "react";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc } from "firebase/firestore";
+import { db, auth } from "../firebase";
+import { ROLES } from "../context/AuthContext";
+
+export function useUsers() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+      const snap = await getDocs(q);
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setUsers(list);
+    } catch (err) {
+      setError("Erreur lors du chargement des utilisateurs.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const createUser = async ({ email, password, displayName, role, poste }) => {
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = credential.user.uid;
+      await setDoc(doc(db, "users", uid), {
+        uid,
+        email,
+        displayName,
+        role: role || ROLES.VIEWER,
+        poste: poste || "",
+        actif: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      await fetchUsers();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updateUserRole = async (uid, newRole) => {
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        role: newRole,
+        updatedAt: serverTimestamp(),
+      });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === uid ? { ...u, role: newRole } : u))
+      );
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const toggleUserStatus = async (uid, currentStatus) => {
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        actif: !currentStatus,
+        updatedAt: serverTimestamp(),
+      });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === uid ? { ...u, actif: !currentStatus } : u
+        )
+      );
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const deleteUser = async (uid) => {
+    try {
+      await deleteDoc(doc(db, "users", uid));
+      setUsers((prev) => prev.filter((u) => u.id !== uid));
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  return {
+    users,
+    loading,
+    error,
+    fetchUsers,
+    createUser,
+    updateUserRole,
+    toggleUserStatus,
+    deleteUser,
+  };
+}
