@@ -2,136 +2,104 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp,
+  collection, addDoc, getDocs, query, orderBy, serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 
 const C = {
-  primary: "#1e3a5f",
-  accent: "#f59e0b",
-  success: "#10b981",
-  danger: "#ef4444",
-  warning: "#f59e0b",
-  text: "#1e293b",
-  muted: "#64748b",
-  border: "#e2e8f0",
-  bg: "#f8fafc",
-  white: "#ffffff",
+  primary: "#1e3a5f", accent: "#f59e0b", success: "#10b981",
+  danger: "#ef4444", text: "#1e293b", muted: "#64748b",
+  border: "#e2e8f0", bg: "#f8fafc", white: "#ffffff",
 };
 
-const TEMPS_OPTIONS = ["Ensoleillé", "Nuageux", "Pluvieux", "Venteux", "Orageux", "Brumeux"];
+const TEMPS_OPTIONS = ["Ensoleillé","Nuageux","Pluvieux","Venteux","Orageux","Brumeux"];
 
 export default function JournalChantier() {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
 
-  const [vue, setVue] = useState("liste"); // "liste" | "nouveau"
+  const [vue, setVue] = useState("selection"); // "selection" | "liste" | "nouveau"
+  const [projets, setProjets] = useState([]);
+  const [projetSelectionne, setProjetSelectionne] = useState(null);
   const [journaux, setJournaux] = useState([]);
-  const [loadingList, setLoadingList] = useState(true);
+  const [loadingProjets, setLoadingProjets] = useState(true);
+  const [loadingJournaux, setLoadingJournaux] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
-  const [projets, setProjets] = useState([]);
 
   const [form, setForm] = useState({
-    projetId: "",
-    chantier: "",
-    entreprise: "",
-    missionControle: "",
     date: new Date().toISOString().split("T")[0],
-    temps: "Ensoleillé",
-    horaireDebut: "08:00",
-    horaireFin: "17:00",
-    instructionsOuvrage: "",
-    instructionsControle: "",
-    observations: "",
+    temps: "Ensoleillé", horaireDebut: "08:00", horaireFin: "17:00",
+    entreprise: "", missionControle: "",
+    instructionsOuvrage: "", instructionsControle: "", observations: "",
   });
 
   const [personnel, setPersonnel] = useState([{ poste: "", nombre: "" }]);
-  const [materiel, setMateriel] = useState([
-    { designation: "", quantite: "", etat: "marche" },
-  ]);
-  const [approvisionnement, setApprovisionnement] = useState([
-    { designation: "", quantite: "", unite: "" },
-  ]);
-  const [travaux, setTravaux] = useState([
-    { designation: "", localisation: "", observations: "" },
-  ]);
+  const [materiel, setMateriel] = useState([{ designation: "", quantite: "", etat: "marche" }]);
+  const [approvisionnement, setApprovisionnement] = useState([{ designation: "", quantite: "", unite: "" }]);
+  const [travaux, setTravaux] = useState([{ designation: "", localisation: "", observations: "" }]);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Charger projets et journaux
+  // Charger projets
   useEffect(() => {
-    const fetchData = async () => {
-      setLoadingList(true);
+    const fetchProjets = async () => {
+      setLoadingProjets(true);
       try {
-        const [projSnap, jourSnap] = await Promise.all([
-          getDocs(collection(db, "projets")),
-          getDocs(query(collection(db, "journauxDeChantier"), orderBy("createdAt", "desc"))),
-        ]);
-        setProjets(projSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setJournaux(jourSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingList(false);
-      }
+        const snap = await getDocs(collection(db, "projets"));
+        setProjets(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) { console.error(err); }
+      finally { setLoadingProjets(false); }
     };
-    fetchData();
+    fetchProjets();
   }, []);
 
-  const handleFormChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // Charger journaux du projet sélectionné
+  const handleSelectProjet = async (projet) => {
+    setProjetSelectionne(projet);
+    setLoadingJournaux(true);
+    try {
+      const snap = await getDocs(
+        query(collection(db, "journauxDeChantier"), orderBy("createdAt", "desc"))
+      );
+      const tous = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setJournaux(tous.filter((j) => j.projetId === projet.id));
+    } catch (err) { console.error(err); }
+    finally { setLoadingJournaux(false); }
+    setVue("liste");
   };
 
-  // Personnel
-  const updatePersonnel = (i, field, val) =>
-    setPersonnel((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
+  const handleFormChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const updatePersonnel = (i, f, v) => setPersonnel((p) => p.map((x, idx) => idx === i ? { ...x, [f]: v } : x));
   const addPersonnel = () => setPersonnel((p) => [...p, { poste: "", nombre: "" }]);
   const removePersonnel = (i) => setPersonnel((p) => p.filter((_, idx) => idx !== i));
 
-  // Matériel
-  const updateMateriel = (i, field, val) =>
-    setMateriel((prev) => prev.map((m, idx) => (idx === i ? { ...m, [field]: val } : m)));
+  const updateMateriel = (i, f, v) => setMateriel((p) => p.map((x, idx) => idx === i ? { ...x, [f]: v } : x));
   const addMateriel = () => setMateriel((m) => [...m, { designation: "", quantite: "", etat: "marche" }]);
   const removeMateriel = (i) => setMateriel((m) => m.filter((_, idx) => idx !== i));
 
-  // Approvisionnement
-  const updateAppro = (i, field, val) =>
-    setApprovisionnement((prev) => prev.map((a, idx) => (idx === i ? { ...a, [field]: val } : a)));
+  const updateAppro = (i, f, v) => setApprovisionnement((p) => p.map((x, idx) => idx === i ? { ...x, [f]: v } : x));
   const addAppro = () => setApprovisionnement((a) => [...a, { designation: "", quantite: "", unite: "" }]);
   const removeAppro = (i) => setApprovisionnement((a) => a.filter((_, idx) => idx !== i));
 
-  // Travaux
-  const updateTravaux = (i, field, val) =>
-    setTravaux((prev) => prev.map((t, idx) => (idx === i ? { ...t, [field]: val } : t)));
+  const updateTravaux = (i, f, v) => setTravaux((p) => p.map((x, idx) => idx === i ? { ...x, [f]: v } : x));
   const addTravaux = () => setTravaux((t) => [...t, { designation: "", localisation: "", observations: "" }]);
   const removeTravaux = (i) => setTravaux((t) => t.filter((_, idx) => idx !== i));
 
-  // Reset
   const resetForm = () => {
-    setForm({
-      projetId: "", chantier: "", entreprise: "", missionControle: "",
-      date: new Date().toISOString().split("T")[0],
-      temps: "Ensoleillé", horaireDebut: "08:00", horaireFin: "17:00",
-      instructionsOuvrage: "", instructionsControle: "", observations: "",
-    });
+    setForm({ date: new Date().toISOString().split("T")[0], temps: "Ensoleillé", horaireDebut: "08:00", horaireFin: "17:00", entreprise: projetSelectionne?.entreprise || "", missionControle: "", instructionsOuvrage: "", instructionsControle: "", observations: "" });
     setPersonnel([{ poste: "", nombre: "" }]);
     setMateriel([{ designation: "", quantite: "", etat: "marche" }]);
     setApprovisionnement([{ designation: "", quantite: "", unite: "" }]);
     setTravaux([{ designation: "", localisation: "", observations: "" }]);
   };
 
-  // Validation
   const validate = () => {
-    if (!form.chantier.trim()) return "Le nom du chantier est requis.";
     if (!form.date) return "La date est requise.";
     if (!form.entreprise.trim()) return "L'entreprise est requise.";
     if (personnel.some((p) => !p.poste.trim())) return "Remplissez tous les postes du personnel.";
@@ -139,126 +107,77 @@ export default function JournalChantier() {
     return null;
   };
 
-  // Sauvegarder
   const handleSave = async () => {
     const err = validate();
     if (err) { showToast(err, "error"); return; }
     setSaving(true);
     try {
-      const projetSelectionne = projets.find((p) => p.id === form.projetId);
       const docRef = await addDoc(collection(db, "journauxDeChantier"), {
         ...form,
-        nomProjet: projetSelectionne?.nomProjet || form.chantier,
-        personnel,
-        materiel,
-        approvisionnement,
-        travaux,
+        projetId: projetSelectionne.id,
+        nomProjet: projetSelectionne.nomProjet,
+        numProjet: projetSelectionne.numProjet || "",
+        chantier: projetSelectionne.nomProjet,
+        personnel, materiel, approvisionnement, travaux,
         createdBy: currentUser?.uid || "",
         createdByName: userProfile?.displayName || currentUser?.email || "",
         createdAt: serverTimestamp(),
       });
-      setJournaux((prev) => [
-        {
-          id: docRef.id,
-          ...form,
-          personnel,
-          materiel,
-          approvisionnement,
-          travaux,
-          createdByName: userProfile?.displayName || "",
-        },
-        ...prev,
-      ]);
-      showToast("Journal de chantier enregistré avec succès !");
+      setJournaux((prev) => [{ id: docRef.id, ...form, personnel, materiel, approvisionnement, travaux, createdByName: userProfile?.displayName || "" }, ...prev]);
+      showToast("Journal enregistré avec succès !");
       resetForm();
       setVue("liste");
     } catch (error) {
-      console.error(error);
       showToast("Erreur lors de l'enregistrement.", "error");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  // Impression
   const handlePrint = () => {
     const win = window.open("", "_blank");
     const totalPersonnel = personnel.reduce((s, p) => s + parseInt(p.nombre || 0), 0);
-    win.document.write(`
-      <!DOCTYPE html>
-      <html lang="fr">
-      <head>
-        <meta charset="UTF-8"/>
-        <title>Journal de Chantier — ${form.date}</title>
-        <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: Arial, sans-serif; font-size: 11px; color: #000; padding: 15mm; }
-          h1 { text-align: center; font-size: 16px; border-bottom: 2px solid #1e3a5f; padding-bottom: 8px; margin-bottom: 12px; color: #1e3a5f; }
-          .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-          .info-box { border: 1px solid #ccc; padding: 6px 10px; border-radius: 4px; }
-          .info-label { font-size: 9px; color: #666; text-transform: uppercase; }
-          .info-value { font-weight: bold; font-size: 12px; }
-          .section { margin-bottom: 12px; }
-          .section-title { background: #1e3a5f; color: white; padding: 5px 10px; font-weight: bold; font-size: 11px; border-radius: 3px 3px 0 0; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; }
-          th { background: #f0f4f8; font-weight: bold; font-size: 10px; }
-          .visas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
-          .visa-box { border-top: 2px solid #1e3a5f; padding-top: 8px; text-align: center; }
-          .visa-label { font-size: 10px; color: #666; }
-          .visa-space { height: 50px; }
-          @media print { body { padding: 10mm; } }
-        </style>
-      </head>
-      <body>
-        <h1>📋 JOURNAL DE CHANTIER</h1>
-        <div class="header-grid">
-          <div class="info-box"><div class="info-label">Chantier</div><div class="info-value">${form.chantier}</div></div>
-          <div class="info-box"><div class="info-label">Date</div><div class="info-value">${new Date(form.date).toLocaleDateString("fr-DZ")}</div></div>
-          <div class="info-box"><div class="info-label">Entreprise</div><div class="info-value">${form.entreprise}</div></div>
-          <div class="info-box"><div class="info-label">Conditions météo</div><div class="info-value">${form.temps}</div></div>
-          <div class="info-box"><div class="info-label">Horaires</div><div class="info-value">${form.horaireDebut} — ${form.horaireFin}</div></div>
-          <div class="info-box"><div class="info-label">Mission de contrôle</div><div class="info-value">${form.missionControle || "—"}</div></div>
-        </div>
-        <div class="section">
-          <div class="section-title">PERSONNEL (Total : ${totalPersonnel} personnes)</div>
-          <table><thead><tr><th>Poste</th><th>Nombre</th></tr></thead><tbody>
-            ${personnel.map((p) => `<tr><td>${p.poste}</td><td>${p.nombre}</td></tr>`).join("")}
-          </tbody></table>
-        </div>
-        <div class="section">
-          <div class="section-title">MATÉRIEL</div>
-          <table><thead><tr><th>Désignation</th><th>Quantité</th><th>État</th></tr></thead><tbody>
-            ${materiel.map((m) => `<tr><td>${m.designation}</td><td>${m.quantite}</td><td>${m.etat}</td></tr>`).join("")}
-          </tbody></table>
-        </div>
-        <div class="section">
-          <div class="section-title">APPROVISIONNEMENT</div>
-          <table><thead><tr><th>Désignation</th><th>Quantité</th><th>Unité</th></tr></thead><tbody>
-            ${approvisionnement.map((a) => `<tr><td>${a.designation}</td><td>${a.quantite}</td><td>${a.unite}</td></tr>`).join("")}
-          </tbody></table>
-        </div>
-        <div class="section">
-          <div class="section-title">TRAVAUX RÉALISÉS</div>
-          <table><thead><tr><th>Désignation</th><th>Localisation</th><th>Observations</th></tr></thead><tbody>
-            ${travaux.map((t) => `<tr><td>${t.designation}</td><td>${t.localisation}</td><td>${t.observations}</td></tr>`).join("")}
-          </tbody></table>
-        </div>
-        ${form.instructionsOuvrage || form.instructionsControle ? `
-        <div class="section">
-          <div class="section-title">INSTRUCTIONS</div>
-          <table><tbody>
-            ${form.instructionsOuvrage ? `<tr><td><strong>Maître d'Ouvrage :</strong></td><td>${form.instructionsOuvrage}</td></tr>` : ""}
-            ${form.instructionsControle ? `<tr><td><strong>Mission de Contrôle :</strong></td><td>${form.instructionsControle}</td></tr>` : ""}
-          </tbody></table>
-        </div>` : ""}
-        <div class="visas">
-          <div class="visa-box"><div class="visa-space"></div><div class="visa-label">Chef de Chantier</div></div>
-          <div class="visa-box"><div class="visa-space"></div><div class="visa-label">Mission de Contrôle</div></div>
-          <div class="visa-box"><div class="visa-space"></div><div class="visa-label">Chef de Projet</div></div>
-        </div>
-      </body></html>
-    `);
+    win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
+      <title>Journal de Chantier — ${form.date}</title>
+      <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;padding:15mm}
+      h1{text-align:center;font-size:16px;border-bottom:2px solid #1e3a5f;padding-bottom:8px;margin-bottom:12px;color:#1e3a5f}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+      .box{border:1px solid #ccc;padding:6px 10px;border-radius:4px}
+      .lbl{font-size:9px;color:#666;text-transform:uppercase}.val{font-weight:bold;font-size:12px}
+      .sec{margin-bottom:12px}.sec-title{background:#1e3a5f;color:white;padding:5px 10px;font-weight:bold;border-radius:3px 3px 0 0}
+      table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left}
+      th{background:#f0f4f8;font-size:10px}
+      .visas{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:20px}
+      .visa{border-top:2px solid #1e3a5f;padding-top:8px;text-align:center}.visa-sp{height:50px}
+      </style></head><body>
+      <h1>📋 JOURNAL DE CHANTIER — ${projetSelectionne?.nomProjet || ""}</h1>
+      <div class="grid">
+        <div class="box"><div class="lbl">Projet</div><div class="val">${projetSelectionne?.nomProjet || ""}</div></div>
+        <div class="box"><div class="lbl">Date</div><div class="val">${new Date(form.date).toLocaleDateString("fr-DZ")}</div></div>
+        <div class="box"><div class="lbl">Entreprise</div><div class="val">${form.entreprise}</div></div>
+        <div class="box"><div class="lbl">Météo</div><div class="val">${form.temps}</div></div>
+        <div class="box"><div class="lbl">Horaires</div><div class="val">${form.horaireDebut} — ${form.horaireFin}</div></div>
+        <div class="box"><div class="lbl">Mission de contrôle</div><div class="val">${form.missionControle || "—"}</div></div>
+      </div>
+      <div class="sec"><div class="sec-title">PERSONNEL (Total : ${totalPersonnel} personnes)</div>
+      <table><thead><tr><th>Poste</th><th>Nombre</th></tr></thead><tbody>
+      ${personnel.map((p) => `<tr><td>${p.poste}</td><td>${p.nombre}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="sec"><div class="sec-title">MATÉRIEL</div>
+      <table><thead><tr><th>Désignation</th><th>Quantité</th><th>État</th></tr></thead><tbody>
+      ${materiel.map((m) => `<tr><td>${m.designation}</td><td>${m.quantite}</td><td>${m.etat}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="sec"><div class="sec-title">APPROVISIONNEMENT</div>
+      <table><thead><tr><th>Désignation</th><th>Quantité</th><th>Unité</th></tr></thead><tbody>
+      ${approvisionnement.map((a) => `<tr><td>${a.designation}</td><td>${a.quantite}</td><td>${a.unite}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="sec"><div class="sec-title">TRAVAUX RÉALISÉS</div>
+      <table><thead><tr><th>Désignation</th><th>Localisation</th><th>Observations</th></tr></thead><tbody>
+      ${travaux.map((t) => `<tr><td>${t.designation}</td><td>${t.localisation}</td><td>${t.observations}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="visas">
+        <div class="visa"><div class="visa-sp"></div><div class="lbl">Chef de Chantier</div></div>
+        <div class="visa"><div class="visa-sp"></div><div class="lbl">Mission de Contrôle</div></div>
+        <div class="visa"><div class="visa-sp"></div><div class="lbl">Chef de Projet</div></div>
+      </div></body></html>`);
     win.document.close();
     win.print();
   };
@@ -277,21 +196,27 @@ export default function JournalChantier() {
           <div style={s.breadcrumb}>
             <span style={s.breadcrumbLink} onClick={() => navigate("/FirstPage")}>Accueil</span>
             <span style={s.breadcrumbSep}>/</span>
-            <span>Journal de Chantier</span>
+            {vue !== "selection" && (
+              <>
+                <span style={s.breadcrumbLink} onClick={() => setVue("selection")}>Projets</span>
+                <span style={s.breadcrumbSep}>/</span>
+              </>
+            )}
+            <span>{vue === "selection" ? "Journal de Chantier" : vue === "liste" ? projetSelectionne?.nomProjet : "Nouveau Journal"}</span>
           </div>
-          <h1 style={s.title}>Journal de Chantier</h1>
-          <p style={s.subtitle}>Suivi journalier des activités — {userProfile?.displayName || currentUser?.email}</p>
+          <h1 style={s.title}>📓 Journal de Chantier</h1>
+          <p style={s.subtitle}>{userProfile?.displayName || currentUser?.email}</p>
         </div>
         <div style={s.headerActions}>
-          {vue === "liste" ? (
-            <button style={s.btnPrimary} onClick={() => setVue("nouveau")}>
-              + Nouveau Journal
-            </button>
-          ) : (
+          {vue === "liste" && (
             <>
-              <button style={s.btnSecondary} onClick={() => { setVue("liste"); resetForm(); }}>
-                ← Retour
-              </button>
+              <button style={s.btnSecondary} onClick={() => setVue("selection")}>← Changer de projet</button>
+              <button style={s.btnPrimary} onClick={() => setVue("nouveau")}>+ Nouveau Journal</button>
+            </>
+          )}
+          {vue === "nouveau" && (
+            <>
+              <button style={s.btnSecondary} onClick={() => { setVue("liste"); resetForm(); }}>← Retour</button>
               <button style={s.btnOutline} onClick={handlePrint}>🖨️ Imprimer</button>
               <button style={s.btnPrimary} onClick={handleSave} disabled={saving}>
                 {saving ? "Enregistrement..." : "💾 Enregistrer"}
@@ -301,16 +226,109 @@ export default function JournalChantier() {
         </div>
       </div>
 
-      {/* VUE LISTE */}
+      {/* ========== VUE SÉLECTION PROJET ========== */}
+      {vue === "selection" && (
+        <div style={s.content}>
+          <div style={s.selectionCard}>
+            {/* Titre */}
+            <div style={s.selectionHeader}>
+              <span style={s.selectionIcon}>📓</span>
+              <h2 style={s.selectionTitle}>Journal de Chantier</h2>
+              <p style={s.selectionSubtitle}>
+                Sélectionnez le projet pour accéder à son journal de chantier
+              </p>
+            </div>
+
+            {/* Roulette de sélection */}
+            {loadingProjets ? (
+              <div style={s.center}>Chargement des projets...</div>
+            ) : projets.length === 0 ? (
+              <div style={s.emptyState}>
+                <span style={s.emptyIcon}>📁</span>
+                <p style={s.emptyTitle}>Aucun projet disponible</p>
+                <p style={s.emptyText}>Créez d'abord une fiche projet pour accéder au journal.</p>
+                <button style={s.btnPrimary} onClick={() => navigate("/FicheProjet")}>
+                  Créer un projet
+                </button>
+              </div>
+            ) : (
+              <div style={s.rouletteWrapper}>
+                <label style={s.rouletteLabel}>Projet *</label>
+                <select
+                  style={s.roulette}
+                  defaultValue=""
+                  onChange={(e) => {
+                    const p = projets.find((x) => x.id === e.target.value);
+                    if (p) handleSelectProjet(p);
+                  }}
+                >
+                  <option value="" disabled>-- Sélectionnez un projet --</option>
+                  {projets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.numProjet ? `[${p.numProjet}] ` : ""}{p.nomProjet}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Ou choisir dans les cartes */}
+                <div style={s.ouDivider}>
+                  <span style={s.ouText}>ou choisissez directement</span>
+                </div>
+
+                <div style={s.projetGrid}>
+                  {projets.map((p) => (
+                    <div
+                      key={p.id}
+                      style={s.projetCard}
+                      onClick={() => handleSelectProjet(p)}
+                    >
+                      <div style={s.projetCardIcon}>📋</div>
+                      <div style={s.projetCardNum}>{p.numProjet || "—"}</div>
+                      <div style={s.projetCardNom}>{p.nomProjet}</div>
+                      <div style={s.projetCardMeta}>
+                        {p.lieu && <span>📍 {p.lieu}</span>}
+                        {p.delais && <span>⏱ {p.delais} jours</span>}
+                      </div>
+                      <div style={s.projetCardBtn}>Ouvrir le journal →</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========== VUE LISTE JOURNAUX ========== */}
       {vue === "liste" && (
         <div style={s.content}>
-          {loadingList ? (
+          {/* Info projet sélectionné */}
+          <div style={s.projetBanner}>
+            <div style={s.projetBannerLeft}>
+              <span style={s.projetBannerIcon}>📋</span>
+              <div>
+                <div style={s.projetBannerNom}>{projetSelectionne?.nomProjet}</div>
+                <div style={s.projetBannerMeta}>
+                  {projetSelectionne?.numProjet && <span>N° {projetSelectionne.numProjet}</span>}
+                  {projetSelectionne?.lieu && <span> • 📍 {projetSelectionne.lieu}</span>}
+                  {projetSelectionne?.entreprise && <span> • 🏢 {projetSelectionne.entreprise}</span>}
+                </div>
+              </div>
+            </div>
+            <div style={s.projetBannerStats}>
+              <span style={s.projetBannerStat}>
+                <strong>{journaux.length}</strong> journal(aux)
+              </span>
+            </div>
+          </div>
+
+          {loadingJournaux ? (
             <div style={s.center}>Chargement des journaux...</div>
           ) : journaux.length === 0 ? (
             <div style={s.emptyState}>
               <span style={s.emptyIcon}>📋</span>
-              <p style={s.emptyTitle}>Aucun journal de chantier</p>
-              <p style={s.emptyText}>Créez votre premier journal pour commencer le suivi journalier.</p>
+              <p style={s.emptyTitle}>Aucun journal pour ce projet</p>
+              <p style={s.emptyText}>Créez le premier journal de chantier pour {projetSelectionne?.nomProjet}.</p>
               <button style={s.btnPrimary} onClick={() => setVue("nouveau")}>
                 + Créer un journal
               </button>
@@ -323,9 +341,8 @@ export default function JournalChantier() {
                     <div style={s.journalDate}>
                       {j.date ? new Date(j.date).toLocaleDateString("fr-DZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "—"}
                     </div>
-                    <span style={{ ...s.tempsBadge }}>{j.temps || "—"}</span>
+                    <span style={s.tempsBadge}>{j.temps || "—"}</span>
                   </div>
-                  <div style={s.journalTitle}>{j.chantier}</div>
                   <div style={s.journalMeta}>{j.entreprise}</div>
                   <div style={s.journalStats}>
                     <span>👷 {j.personnel?.length || 0} postes</span>
@@ -343,38 +360,41 @@ export default function JournalChantier() {
         </div>
       )}
 
-      {/* VUE FORMULAIRE */}
+      {/* ========== VUE FORMULAIRE ========== */}
       {vue === "nouveau" && (
         <div style={s.content}>
+
+          {/* Banner projet */}
+          <div style={s.projetBanner}>
+            <div style={s.projetBannerLeft}>
+              <span style={s.projetBannerIcon}>📋</span>
+              <div>
+                <div style={s.projetBannerNom}>{projetSelectionne?.nomProjet}</div>
+                <div style={s.projetBannerMeta}>Nouveau journal de chantier</div>
+              </div>
+            </div>
+          </div>
 
           {/* Informations générales */}
           <div style={s.card}>
             <h2 style={s.sectionTitle}>📋 Informations générales</h2>
             <div style={s.grid3}>
               <div style={s.field}>
-                <label style={s.label}>Projet lié</label>
-                <select name="projetId" style={s.input} value={form.projetId} onChange={handleFormChange}>
-                  <option value="">-- Sélectionner un projet --</option>
-                  {projets.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nomProjet || p.numProjet}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={s.field}>
-                <label style={s.label}>Chantier *</label>
-                <input name="chantier" type="text" style={s.input} placeholder="Nom du chantier" value={form.chantier} onChange={handleFormChange} />
-              </div>
-              <div style={s.field}>
                 <label style={s.label}>Entreprise *</label>
-                <input name="entreprise" type="text" style={s.input} placeholder="Nom de l'entreprise" value={form.entreprise} onChange={handleFormChange} />
+                <input name="entreprise" type="text" style={s.input}
+                  placeholder="Nom de l'entreprise"
+                  value={form.entreprise} onChange={handleFormChange} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Mission de Contrôle</label>
-                <input name="missionControle" type="text" style={s.input} placeholder="Bureau de contrôle" value={form.missionControle} onChange={handleFormChange} />
+                <input name="missionControle" type="text" style={s.input}
+                  placeholder="Bureau de contrôle"
+                  value={form.missionControle} onChange={handleFormChange} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Date *</label>
-                <input name="date" type="date" style={s.input} value={form.date} onChange={handleFormChange} />
+                <input name="date" type="date" style={s.input}
+                  value={form.date} onChange={handleFormChange} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Conditions météo</label>
@@ -384,11 +404,13 @@ export default function JournalChantier() {
               </div>
               <div style={s.field}>
                 <label style={s.label}>Début des travaux</label>
-                <input name="horaireDebut" type="time" style={s.input} value={form.horaireDebut} onChange={handleFormChange} />
+                <input name="horaireDebut" type="time" style={s.input}
+                  value={form.horaireDebut} onChange={handleFormChange} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Fin des travaux</label>
-                <input name="horaireFin" type="time" style={s.input} value={form.horaireFin} onChange={handleFormChange} />
+                <input name="horaireFin" type="time" style={s.input}
+                  value={form.horaireFin} onChange={handleFormChange} />
               </div>
             </div>
           </div>
@@ -401,35 +423,23 @@ export default function JournalChantier() {
             </div>
             <div style={s.tableWrapper}>
               <table style={s.table}>
-                <thead>
-                  <tr style={s.thead}>
-                    <th style={s.th}>Poste / Qualification</th>
-                    <th style={s.th}>Nombre</th>
-                    <th style={s.th}></th>
-                  </tr>
-                </thead>
+                <thead><tr style={s.thead}>
+                  <th style={s.th}>Poste / Qualification</th>
+                  <th style={s.th}>Nombre</th>
+                  <th style={s.th}></th>
+                </tr></thead>
                 <tbody>
                   {personnel.map((p, i) => (
                     <tr key={i} style={s.tr}>
-                      <td style={s.td}>
-                        <input style={s.inputSm} type="text" placeholder="Maçon, Ferrailleur..." value={p.poste} onChange={(e) => updatePersonnel(i, "poste", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        <input style={{ ...s.inputSm, width: 80 }} type="number" min="0" placeholder="0" value={p.nombre} onChange={(e) => updatePersonnel(i, "nombre", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        {personnel.length > 1 && (
-                          <button style={s.deleteBtn} onClick={() => removePersonnel(i)}>🗑</button>
-                        )}
-                      </td>
+                      <td style={s.td}><input style={s.inputSm} type="text" placeholder="Maçon, Ferrailleur..." value={p.poste} onChange={(e) => updatePersonnel(i, "poste", e.target.value)} /></td>
+                      <td style={s.td}><input style={{ ...s.inputSm, width: 80 }} type="number" min="0" value={p.nombre} onChange={(e) => updatePersonnel(i, "nombre", e.target.value)} /></td>
+                      <td style={s.td}>{personnel.length > 1 && <button style={s.deleteBtn} onClick={() => removePersonnel(i)}>🗑</button>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div style={s.totalRow}>
-              Total personnel : <strong>{personnel.reduce((s, p) => s + parseInt(p.nombre || 0), 0)} personnes</strong>
-            </div>
+            <div style={s.totalRow}>Total : <strong>{personnel.reduce((s, p) => s + parseInt(p.nombre || 0), 0)} personnes</strong></div>
           </div>
 
           {/* Matériel */}
@@ -440,23 +450,14 @@ export default function JournalChantier() {
             </div>
             <div style={s.tableWrapper}>
               <table style={s.table}>
-                <thead>
-                  <tr style={s.thead}>
-                    <th style={s.th}>Désignation</th>
-                    <th style={s.th}>Quantité</th>
-                    <th style={s.th}>État</th>
-                    <th style={s.th}></th>
-                  </tr>
-                </thead>
+                <thead><tr style={s.thead}>
+                  <th style={s.th}>Désignation</th><th style={s.th}>Quantité</th><th style={s.th}>État</th><th style={s.th}></th>
+                </tr></thead>
                 <tbody>
                   {materiel.map((m, i) => (
                     <tr key={i} style={s.tr}>
-                      <td style={s.td}>
-                        <input style={s.inputSm} type="text" placeholder="Pelleteuse, Bétonnière..." value={m.designation} onChange={(e) => updateMateriel(i, "designation", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        <input style={{ ...s.inputSm, width: 80 }} type="number" min="0" value={m.quantite} onChange={(e) => updateMateriel(i, "quantite", e.target.value)} />
-                      </td>
+                      <td style={s.td}><input style={s.inputSm} type="text" placeholder="Pelleteuse..." value={m.designation} onChange={(e) => updateMateriel(i, "designation", e.target.value)} /></td>
+                      <td style={s.td}><input style={{ ...s.inputSm, width: 80 }} type="number" min="0" value={m.quantite} onChange={(e) => updateMateriel(i, "quantite", e.target.value)} /></td>
                       <td style={s.td}>
                         <select style={{ ...s.inputSm, width: 120 }} value={m.etat} onChange={(e) => updateMateriel(i, "etat", e.target.value)}>
                           <option value="marche">En marche</option>
@@ -464,11 +465,7 @@ export default function JournalChantier() {
                           <option value="panne">En panne</option>
                         </select>
                       </td>
-                      <td style={s.td}>
-                        {materiel.length > 1 && (
-                          <button style={s.deleteBtn} onClick={() => removeMateriel(i)}>🗑</button>
-                        )}
-                      </td>
+                      <td style={s.td}>{materiel.length > 1 && <button style={s.deleteBtn} onClick={() => removeMateriel(i)}>🗑</button>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -484,31 +481,16 @@ export default function JournalChantier() {
             </div>
             <div style={s.tableWrapper}>
               <table style={s.table}>
-                <thead>
-                  <tr style={s.thead}>
-                    <th style={s.th}>Désignation</th>
-                    <th style={s.th}>Quantité</th>
-                    <th style={s.th}>Unité</th>
-                    <th style={s.th}></th>
-                  </tr>
-                </thead>
+                <thead><tr style={s.thead}>
+                  <th style={s.th}>Désignation</th><th style={s.th}>Quantité</th><th style={s.th}>Unité</th><th style={s.th}></th>
+                </tr></thead>
                 <tbody>
                   {approvisionnement.map((a, i) => (
                     <tr key={i} style={s.tr}>
-                      <td style={s.td}>
-                        <input style={s.inputSm} type="text" placeholder="Ciment, Sable, Acier..." value={a.designation} onChange={(e) => updateAppro(i, "designation", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        <input style={{ ...s.inputSm, width: 80 }} type="number" min="0" value={a.quantite} onChange={(e) => updateAppro(i, "quantite", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        <input style={{ ...s.inputSm, width: 80 }} type="text" placeholder="T, m³..." value={a.unite} onChange={(e) => updateAppro(i, "unite", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        {approvisionnement.length > 1 && (
-                          <button style={s.deleteBtn} onClick={() => removeAppro(i)}>🗑</button>
-                        )}
-                      </td>
+                      <td style={s.td}><input style={s.inputSm} type="text" placeholder="Ciment, Sable..." value={a.designation} onChange={(e) => updateAppro(i, "designation", e.target.value)} /></td>
+                      <td style={s.td}><input style={{ ...s.inputSm, width: 80 }} type="number" min="0" value={a.quantite} onChange={(e) => updateAppro(i, "quantite", e.target.value)} /></td>
+                      <td style={s.td}><input style={{ ...s.inputSm, width: 80 }} type="text" placeholder="T, m³..." value={a.unite} onChange={(e) => updateAppro(i, "unite", e.target.value)} /></td>
+                      <td style={s.td}>{approvisionnement.length > 1 && <button style={s.deleteBtn} onClick={() => removeAppro(i)}>🗑</button>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -516,7 +498,7 @@ export default function JournalChantier() {
             </div>
           </div>
 
-          {/* Travaux réalisés */}
+          {/* Travaux */}
           <div style={{ ...s.card, marginTop: 20 }}>
             <div style={s.sectionHeader}>
               <h2 style={s.sectionTitle}>🏗️ Travaux réalisés</h2>
@@ -524,31 +506,16 @@ export default function JournalChantier() {
             </div>
             <div style={s.tableWrapper}>
               <table style={s.table}>
-                <thead>
-                  <tr style={s.thead}>
-                    <th style={s.th}>Désignation</th>
-                    <th style={s.th}>Localisation / PK</th>
-                    <th style={s.th}>Observations</th>
-                    <th style={s.th}></th>
-                  </tr>
-                </thead>
+                <thead><tr style={s.thead}>
+                  <th style={s.th}>Désignation</th><th style={s.th}>Localisation / PK</th><th style={s.th}>Observations</th><th style={s.th}></th>
+                </tr></thead>
                 <tbody>
                   {travaux.map((t, i) => (
                     <tr key={i} style={s.tr}>
-                      <td style={s.td}>
-                        <input style={s.inputSm} type="text" placeholder="Coulage dalle, Ferraillage..." value={t.designation} onChange={(e) => updateTravaux(i, "designation", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        <input style={{ ...s.inputSm, width: 120 }} type="text" placeholder="Zone A, PK 12+500" value={t.localisation} onChange={(e) => updateTravaux(i, "localisation", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        <input style={s.inputSm} type="text" placeholder="Observations..." value={t.observations} onChange={(e) => updateTravaux(i, "observations", e.target.value)} />
-                      </td>
-                      <td style={s.td}>
-                        {travaux.length > 1 && (
-                          <button style={s.deleteBtn} onClick={() => removeTravaux(i)}>🗑</button>
-                        )}
-                      </td>
+                      <td style={s.td}><input style={s.inputSm} type="text" placeholder="Coulage dalle..." value={t.designation} onChange={(e) => updateTravaux(i, "designation", e.target.value)} /></td>
+                      <td style={s.td}><input style={{ ...s.inputSm, width: 120 }} type="text" placeholder="Zone A, PK 12+500" value={t.localisation} onChange={(e) => updateTravaux(i, "localisation", e.target.value)} /></td>
+                      <td style={s.td}><input style={s.inputSm} type="text" placeholder="Observations..." value={t.observations} onChange={(e) => updateTravaux(i, "observations", e.target.value)} /></td>
+                      <td style={s.td}>{travaux.length > 1 && <button style={s.deleteBtn} onClick={() => removeTravaux(i)}>🗑</button>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -562,20 +529,19 @@ export default function JournalChantier() {
             <div style={s.grid2}>
               <div style={s.field}>
                 <label style={s.label}>Instructions du Maître de l'Ouvrage</label>
-                <textarea name="instructionsOuvrage" style={s.textarea} rows={4} placeholder="Instructions reçues..." value={form.instructionsOuvrage} onChange={handleFormChange} />
+                <textarea name="instructionsOuvrage" style={s.textarea} rows={4} value={form.instructionsOuvrage} onChange={handleFormChange} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Instructions de la Mission de Contrôle</label>
-                <textarea name="instructionsControle" style={s.textarea} rows={4} placeholder="Instructions reçues..." value={form.instructionsControle} onChange={handleFormChange} />
+                <textarea name="instructionsControle" style={s.textarea} rows={4} value={form.instructionsControle} onChange={handleFormChange} />
               </div>
             </div>
             <div style={{ ...s.field, marginTop: 16 }}>
               <label style={s.label}>Observations générales</label>
-              <textarea name="observations" style={s.textarea} rows={3} placeholder="Observations générales de la journée..." value={form.observations} onChange={handleFormChange} />
+              <textarea name="observations" style={s.textarea} rows={3} value={form.observations} onChange={handleFormChange} />
             </div>
           </div>
 
-          {/* Boutons footer */}
           <div style={s.formFooter}>
             <button style={s.btnSecondary} onClick={() => { setVue("liste"); resetForm(); }}>Annuler</button>
             <button style={s.btnOutline} onClick={handlePrint}>🖨️ Aperçu impression</button>
@@ -604,7 +570,7 @@ const s = {
   btnAdd: { padding: "6px 14px", background: C.bg, color: C.primary, border: `1.5px solid ${C.primary}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   content: { padding: 32, maxWidth: 1100, margin: "0 auto" },
   card: { background: C.white, borderRadius: 12, padding: 28, boxShadow: "0 1px 8px rgba(0,0,0,0.06)", border: `1px solid ${C.border}` },
-  sectionTitle: { fontSize: 15, fontWeight: 700, color: C.text, margin: 0 },
+  sectionTitle: { fontSize: 15, fontWeight: 700, color: C.text, margin: "0 0 16px 0" },
   sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
@@ -628,15 +594,40 @@ const s = {
   emptyTitle: { fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8 },
   emptyText: { fontSize: 14, color: C.muted, marginBottom: 24 },
   grid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 },
-  journalCard: { background: C.white, borderRadius: 12, padding: 20, border: `1px solid ${C.border}`, boxShadow: "0 1px 6px rgba(0,0,0,0.05)", cursor: "pointer" },
+  journalCard: { background: C.white, borderRadius: 12, padding: 20, border: `1px solid ${C.border}`, boxShadow: "0 1px 6px rgba(0,0,0,0.05)" },
   journalCardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   journalDate: { fontSize: 12, color: C.muted, fontWeight: 600 },
   tempsBadge: { fontSize: 11, padding: "3px 8px", background: "#eff6ff", color: C.primary, borderRadius: 20, fontWeight: 600 },
-  journalTitle: { fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 4 },
   journalMeta: { fontSize: 13, color: C.muted, marginBottom: 12 },
   journalStats: { display: "flex", gap: 12, fontSize: 12, color: C.muted, marginBottom: 12 },
   journalFooter: { display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted, borderTop: `1px solid ${C.border}`, paddingTop: 10 },
   journalAuthor: { fontStyle: "italic" },
   journalHoraires: { fontWeight: 600 },
+  // Sélection projet
+  selectionCard: { background: C.white, borderRadius: 16, padding: 48, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: `1px solid ${C.border}`, maxWidth: 800, margin: "0 auto" },
+  selectionHeader: { textAlign: "center", marginBottom: 40 },
+  selectionIcon: { fontSize: 56, display: "block", marginBottom: 16 },
+  selectionTitle: { fontSize: 26, fontWeight: 700, color: C.text, marginBottom: 10, marginTop: 0 },
+  selectionSubtitle: { fontSize: 15, color: C.muted, marginTop: 0 },
+  rouletteWrapper: { width: "100%" },
+  rouletteLabel: { display: "block", fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 10 },
+  roulette: { width: "100%", padding: "14px 18px", border: `2px solid ${C.primary}`, borderRadius: 10, fontSize: 16, fontWeight: 600, color: C.text, background: C.white, outline: "none", cursor: "pointer", marginBottom: 8 },
+  ouDivider: { textAlign: "center", margin: "24px 0 20px", position: "relative" },
+  ouText: { background: C.white, padding: "0 16px", fontSize: 13, color: C.muted, position: "relative", zIndex: 1 },
+  projetGrid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, marginTop: 8 },
+  projetCard: { border: `1.5px solid ${C.border}`, borderRadius: 10, padding: 18, cursor: "pointer", transition: "all 0.2s", background: C.bg },
+  projetCardIcon: { fontSize: 24, marginBottom: 8 },
+  projetCardNum: { fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 4 },
+  projetCardNom: { fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 8 },
+  projetCardMeta: { display: "flex", gap: 12, fontSize: 12, color: C.muted, marginBottom: 10 },
+  projetCardBtn: { fontSize: 13, color: C.primary, fontWeight: 600 },
+  // Banner projet actif
+  projetBanner: { background: C.primary, borderRadius: 12, padding: "16px 24px", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" },
+  projetBannerLeft: { display: "flex", alignItems: "center", gap: 14 },
+  projetBannerIcon: { fontSize: 28 },
+  projetBannerNom: { fontSize: 16, fontWeight: 700, color: C.white },
+  projetBannerMeta: { fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 2 },
+  projetBannerStats: { display: "flex", gap: 16 },
+  projetBannerStat: { fontSize: 14, color: "rgba(255,255,255,0.9)" },
   toast: { position: "fixed", bottom: 24, right: 24, color: C.white, padding: "12px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
 };
