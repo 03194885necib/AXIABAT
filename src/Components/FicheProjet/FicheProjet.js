@@ -1023,6 +1023,7 @@ import {
   FormInput, DatesGrid, CloseButton, ModalContent, DateLabel, Modal, DateInput, TabContent, DateGroup, SelectedArticlesSection
 } from '../Styled';
 import ListeArticle from './ListeArticle/ListeArticle';
+import ProjectSelector from '../shared/ProjectSelector';
 
 const TenderCard = () => {
   const [activeTab, setActiveTab] = useState('dates');
@@ -1040,6 +1041,8 @@ const TenderCard = () => {
   const [projectTVA, setProjectTVA] = useState('');
     // New state for project name
     const [projectName, setProjectName] = useState('');
+  const [modeCreation, setModeCreation] = useState(true);
+  const [projetExistant, setProjetExistant] = useState(null);
 
   const navigate = useNavigate();
 
@@ -1378,6 +1381,17 @@ const TenderCard = () => {
       setSelectedArticlesTable([...selectedArticlesTable, { ...article, tvaRate: undefined }]);
     }
   };
+
+  if (!modeCreation && !projetExistant) {
+    return (
+      <ProjectSelector
+        moduleTitle="Fiche Projet"
+        moduleIcon="📋"
+        moduleDesc="Sélectionnez un projet existant ou créez-en un nouveau"
+        onSelect={(projet) => setProjetExistant(projet)}
+      />
+    );
+  }
 
   return (
     <Container>

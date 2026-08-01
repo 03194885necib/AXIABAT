@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, LineChart, Line, CartesianGrid,
 } from "recharts";
 import { useAuth } from "../../context/AuthContext";
+import ProjectSelector from "../shared/ProjectSelector";
 
 const C = {
   primary: "#1e3a5f",
@@ -207,6 +208,17 @@ export default function GestionDelais() {
     cumul: arrets.slice(0, i + 1).reduce((s, x) => s + x.dureeJours, 0),
   }));
   if (tendanceData.length > 0) tendanceData.unshift({ name: "Départ", cumul: 0 });
+
+  if (!selectedProjet) {
+    return (
+      <ProjectSelector
+        moduleTitle="Gestion des Délais"
+        moduleIcon="⏱️"
+        moduleDesc="Sélectionnez le projet pour suivre ses délais et arrêts de travaux"
+        onSelect={(projet) => { handleSelectProjet(projet); }}
+      />
+    );
+  }
 
   return (
     <div style={s.page}>
