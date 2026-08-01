@@ -1,0 +1,74 @@
+Dans chaque fichier suivant, ajoute l'import du composant ProjectSelector et modifie le début du composant pour afficher la roulette de sélection avant tout autre contenu.
+
+Fichier 1 : src/Components/JournalChantier/JournalCHantier.js
+
+Trouve le début du composant (la ligne export default function JournalChantier()) et ajoute ceci juste après les imports existants :
+
+javascript
+import ProjectSelector from "../ProjectSelector";
+
+Puis dans le corps du composant, remplace la gestion de vue === "selection" par ceci — au tout début du return, avant toute autre vue, ajoute :
+
+javascript
+if (!projetSelectionne) {
+  return (
+    <ProjectSelector
+      moduleTitle="Journal de Chantier"
+      moduleIcon="📓"
+      moduleDesc="Sélectionnez le projet pour accéder à son journal de chantier"
+      onSelect={(projet) => {
+        handleSelectProjet(projet);
+      }}
+    />
+  );
+}
+
+Fichier 2 : src/Components/gestion des delais/GestionDelais.js
+
+Ajoute cet import après les imports existants :
+
+javascript
+import ProjectSelector from "../ProjectSelector";
+
+Puis dans le corps du composant, au début du return, ajoute :
+
+javascript
+if (!selectedProjet) {
+  return (
+    <ProjectSelector
+      moduleTitle="Gestion des Délais"
+      moduleIcon="⏱️"
+      moduleDesc="Sélectionnez le projet pour suivre ses délais et arrêts de travaux"
+      onSelect={(projet) => {
+        handleSelectProjet(projet);
+      }}
+    />
+  );
+}
+
+Fichier 3 : src/Components/FicheProjet.js
+
+Ajoute cet import après les imports existants :
+
+javascript
+import ProjectSelector from "./ProjectSelector";
+
+Dans le composant, ajoute un state :
+
+javascript
+const [modeCreation, setModeCreation] = useState(true);
+const [projetExistant, setProjetExistant] = useState(null);
+
+Puis au début du return, ajoute :
+
+javascript
+if (!modeCreation && !projetExistant) {
+  return (
+    <ProjectSelector
+      moduleTitle="Fiche Projet"
+      moduleIcon="📋"
+      moduleDesc="Sélectionnez un projet existant ou créez-en un nouveau"
+      onSelect={(projet) => setProjetExistant(projet)}
+    />
+  );
+}
