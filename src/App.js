@@ -28,6 +28,7 @@ import FirstPage from "./Components/FirstPage/FirstPage";
 import FicheProjet from "./Components/FicheProjet/FicheProjet";
 import ListeArticle from "./Components/FicheProjet/ListeArticle/ListeArticle";
 import MesArticles from "./Components/Articles/Articles";
+import BaseArticles from "./Components/Articles/BaseArticles";
 import JournalCHantier from "./Components/JournalChantier/JournalCHantier.js";
 import Delais from "./Components/gestion des delais/GestionDelais.js";
 import Decompte from "./Components/Décompte/Décompte.js";
@@ -91,6 +92,14 @@ function App() {
         element={
           <ProtectedRoute>
             <MesArticles />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/BaseArticles"
+        element={
+          <ProtectedRoute>
+            <BaseArticles />
           </ProtectedRoute>
         }
       />
