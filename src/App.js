@@ -9,20 +9,20 @@ import Unauthorized from "./pages/auth/Unauthorized";
 
 import UserManagement from "./pages/admin/UserManagement";
 
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ProtectedRoute from "./Components/auth/ProtectedRoute";
 import { ROLES } from "./context/AuthContext";
 
 // Existing pages & components
-import Template from "./Pages/Template22";
-import Home from "./Pages/Home";
-import About from "./Pages/About";
-import Allcharts from "./Pages/Charts/Allcharts";
-import Projects from "./Pages/Project/Project";
-import Articles from "./Pages/Article/Article";
-import Catégorie from "./Pages/Catégories/Categorie";
-import Test from "./Pages/Project/test";
-import AjouterProjet from "./Pages/Project2/Project2";
-import ProjectForm from "./Pages/Project3/ProjectForm";
+import Template from "./pages/Template22";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Allcharts from "./pages/Charts/Allcharts";
+import Projects from "./pages/Project/Project";
+import Articles from "./pages/Article/Article";
+import Catégorie from "./pages/Catégories/Categorie";
+import Test from "./pages/Project/test";
+import AjouterProjet from "./pages/Project2/Project2";
+import ProjectForm from "./pages/Project3/ProjectForm";
 import TestProjet from "./Components/FicheProjet/TestProjet";
 import FirstPage from "./Components/FirstPage/FirstPage";
 import FicheProjet from "./Components/FicheProjet/FicheProjet";
