@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import { useAuth } from "../../../context/AuthContext";
-import ProjectSelector from "../../../shared/ProjectSelector";
+import ProjectSelector from "../../shared/ProjectSelector";
 
 const C = {
   primary: "#1e3a5f", accent: "#f59e0b", success: "#10b981",
