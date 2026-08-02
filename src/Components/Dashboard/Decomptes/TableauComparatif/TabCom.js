@@ -16,7 +16,7 @@
 //     const fetchProjects = async () => {
 //       try {
 //         setLoadingProjects(true);
-//         const projectsSnapshot = await getDocs(collection(db, 'projects'));
+//         const projectsSnapshot = await getDocs(collection(db, 'projets'));
 //         const projectsData = projectsSnapshot.docs.map(doc => ({
 //           id: doc.id,
 //           ...doc.data()
@@ -263,7 +263,7 @@ const TableauComparatifProjet = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const projectsSnapshot = await getDocs(collection(db, 'projects'));
+        const projectsSnapshot = await getDocs(collection(db, 'projets'));
         setProjects(projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
         setError("Erreur de chargement des projets");

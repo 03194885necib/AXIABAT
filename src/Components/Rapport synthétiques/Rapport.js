@@ -29,7 +29,7 @@ const MonthlyReportDashboard = () => {
             setLoading(true);
             setError(null);
             try {
-                const projectsCollectionRef = collection(db, 'projects'); // Assuming your collection is named 'projets' based on earlier code
+                const projectsCollectionRef = collection(db, 'projets'); // Assuming your collection is named 'projets' based on earlier code
                 const q = query(projectsCollectionRef, orderBy('numProjet', 'asc')); // Order by project name
                 const querySnapshot = await getDocs(q);
                 const projectsList = querySnapshot.docs.map(doc => ({
@@ -81,22 +81,22 @@ const MonthlyReportDashboard = () => {
                 setJournalData(journalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
                 // Fetch Notes de calcul des délais (M3)
-                const delayNotesQuery = query(collection(db, 'projects', projectId, 'notesCalculDelais'), orderBy('date', 'asc'));
+                const delayNotesQuery = query(collection(db, 'projets', projectId, 'notesCalculDelais'), orderBy('date', 'asc'));
                 const delayNotesSnapshot = await getDocs(delayNotesQuery);
                 setDelayNotesData(delayNotesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
                 // Fetch Décomptes et tableaux comparatifs mensuels (M4)
-                const paymentQuery = query(collection(db, 'projects', projectId, 'decompteTableauxComparatifs'), orderBy('month', 'asc'));
+                const paymentQuery = query(collection(db, 'projets', projectId, 'decompteTableauxComparatifs'), orderBy('month', 'asc'));
                 const paymentSnapshot = await getDocs(paymentQuery);
                 setPaymentData(paymentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
                 // Fetch Tableaux de bord financiers et d'avancement (M5)
-                const dashboardQuery = query(collection(db, 'projects', projectId, 'tableauxDeBord'), orderBy('date', 'asc'));
+                const dashboardQuery = query(collection(db, 'projets', projectId, 'tableauxDeBord'), orderBy('date', 'asc'));
                 const dashboardSnapshot = await getDocs(dashboardQuery);
                 setDashboardData(dashboardSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
                 // Fetch Project Articles (if stored as a subcollection or linked)
-                const articlesQuery = query(collection(db, 'projects', projectId, 'ArticlesProjet'));
+                const articlesQuery = query(collection(db, 'projets', projectId, 'ArticlesProjet'));
                 const articlesSnapshot = await getDocs(articlesQuery);
                 setProjectArticles(articlesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 

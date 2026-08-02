@@ -15,7 +15,7 @@
 // //     const fetchProjects = async () => {
 // //       try {
 // //         setLoading(true);
-// //         const projectsCollectionRef = collection(db, 'projects');
+// //         const projectsCollectionRef = collection(db, 'projets');
 // //         const projectSnapshot = await getDocs(projectsCollectionRef);
 // //         const projectsList = projectSnapshot.docs.map(doc => ({
 // //           id: doc.id,
@@ -196,7 +196,7 @@
 //     const fetchProjects = async () => {
 //       try {
 //         setLoading(true);
-//         const projectsCollectionRef = collection(db, 'projects');
+//         const projectsCollectionRef = collection(db, 'projets');
 //         const projectSnapshot = await getDocs(projectsCollectionRef);
 //         const projectsList = projectSnapshot.docs.map(doc => ({
 //           id: doc.id,
@@ -487,7 +487,7 @@ const ImportProjectPage = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const projectsCollectionRef = collection(db, 'projects');
+        const projectsCollectionRef = collection(db, 'projets');
         const projectSnapshot = await getDocs(projectsCollectionRef);
         const projectsList = projectSnapshot.docs.map(doc => ({
           id: doc.id,

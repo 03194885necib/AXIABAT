@@ -22,7 +22,7 @@ const ProjetSuivi = () => {
     // Charger les projets depuis Firebase
     useEffect(() => {
         const fetchProjets = async () => {
-            const querySnapshot = await getDocs(collection(db, 'projects'));
+            const querySnapshot = await getDocs(collection(db, 'projets'));
             const projetsList = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()

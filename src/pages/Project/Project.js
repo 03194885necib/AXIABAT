@@ -51,7 +51,7 @@ const navigate=useNavigate()
   
   // Fonction pour récupérer les projets depuis Firebase
   const fetchProjects = async () => {
-    const querySnapshot = await getDocs(collection(db, "projects"));
+    const querySnapshot = await getDocs(collection(db, "projets"));
     const projectList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setProjects(projectList);
   };
@@ -102,7 +102,7 @@ const navigate=useNavigate()
     if (!selectedProjectId) return;
 
     try {
-      await addDoc(collection(db, `projects/${selectedProjectId}/articles`), article);
+      await addDoc(collection(db, `projets/${selectedProjectId}/articles`), article);
       console.log("Article ajouté avec succès !");
       closeArticleModal();
     } catch (error) {

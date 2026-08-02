@@ -19,7 +19,7 @@
 
 //   useEffect(() => {
 //     const fetchProjects = async () => {
-//       const snapshot = await getDocs(collection(db, 'projects'));
+//       const snapshot = await getDocs(collection(db, 'projets'));
 //       const projectList = [];
 //       const map = {};
 //       snapshot.forEach(doc => {
@@ -185,7 +185,7 @@ const DashboardDelai = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const snapshot = await getDocs(collection(db, 'projects'));
+        const snapshot = await getDocs(collection(db, 'projets'));
         const projectList = [];
         const map = {};
         

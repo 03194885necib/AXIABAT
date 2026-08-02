@@ -140,7 +140,7 @@ function DécompteForm() {
     useEffect(() => {
         const fetchProjets = async () => {
             try {
-                const projetsCollection = collection(db, 'projects');
+                const projetsCollection = collection(db, 'projets');
                 const querySnapshot = await getDocs(projetsCollection);
                 const projetsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setProjets(projetsData);

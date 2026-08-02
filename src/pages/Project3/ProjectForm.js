@@ -20,7 +20,7 @@ const ProjectForm = () => {
   const handleFinalSubmit = async () => {
     try {
       // Enregistrer le projet dans Firebase
-      const projectRef = await addDoc(collection(db, 'projects'), {
+      const projectRef = await addDoc(collection(db, 'projets'), {
         id: project.id,
         name: project.name,
         description:project.description,

@@ -35,7 +35,7 @@ const DashboardDelais = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'projects'));
+        const querySnapshot = await getDocs(collection(db, 'projets'));
         setProjets(querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()

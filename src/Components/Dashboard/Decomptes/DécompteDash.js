@@ -27,7 +27,7 @@ const DecompteDashboard = () => {
       setLoading(true);
       
       // 1. Charger les projets
-      const projectsSnapshot = await getDocs(collection(db, 'projects'));
+      const projectsSnapshot = await getDocs(collection(db, 'projets'));
       const projectsData = projectsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()

@@ -128,7 +128,7 @@
 
 //   const addProjectToFirebase = async (projectData) => {
 //     try {
-//       const docRef = await addDoc(collection(db, 'projects'), projectData);
+//       const docRef = await addDoc(collection(db, 'projets'), projectData);
 //       return docRef.id;
 //     } catch (error) {
 //       console.error('Erreur lors de l’ajout du projet :', error);
@@ -630,7 +630,7 @@
 
 //   const addProjectToFirebase = async (projectData) => {
 //     try {
-//       const docRef = await addDoc(collection(db, 'projects'), projectData);
+//       const docRef = await addDoc(collection(db, 'projets'), projectData);
 //       return docRef.id;
 //     } catch (error) {
 //       console.error('Erreur lors de l’ajout du projet :', error);
@@ -1156,7 +1156,7 @@ const TenderCard = () => {
 
   const addProjectToFirebase = async (projectData) => {
     try {
-      const docRef = await addDoc(collection(db, 'projects'), projectData);
+      const docRef = await addDoc(collection(db, 'projets'), projectData);
       return docRef.id;
     } catch (error) {
       console.error('Erreur lors de l’ajout du projet :', error);

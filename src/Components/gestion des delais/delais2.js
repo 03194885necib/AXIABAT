@@ -48,7 +48,7 @@
 //     useEffect(() => {  
 //         const fetchProjects = async () => {  
 //             try {  
-//                 const projectsCollection = collection(db, 'projects');  
+//                 const projectsCollection = collection(db, 'projets');  
 //                 const projectSnapshot = await getDocs(projectsCollection);  
 //                 const projectList = projectSnapshot.docs.map(doc => ({  
 //                     id: doc.id,  
@@ -661,7 +661,7 @@ const DeadlineManagementCard = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const projectsCollection = collection(db, 'projects');
+                const projectsCollection = collection(db, 'projets');
                 const projectSnapshot = await getDocs(projectsCollection);
                 const projectList = projectSnapshot.docs.map(doc => ({
                     id: doc.id,
