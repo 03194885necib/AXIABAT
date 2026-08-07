@@ -1,14 +1,12 @@
 {
-  "name": "geniecivil",
+  "name": "axiabat",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@craco/craco": "^7.1.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@mui/material": "^6.4.8",
-    "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
@@ -42,11 +40,6 @@
       "react-app",
       "react-app/jest"
     ]
-  },
-  "overrides": {
-    "shell-quote": "^1.8.3",
-    "protobufjs": "^7.6.0",
-    "form-data": "^4.0.0"
   },
   "browserslist": {
     "production": [
