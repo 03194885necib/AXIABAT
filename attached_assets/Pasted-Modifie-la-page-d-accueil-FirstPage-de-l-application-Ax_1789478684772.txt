@@ -1,0 +1,53 @@
+Modifie la page d'accueil FirstPage de l'application AxiaBat pour créer un dashboard professionnel avec sidebar de navigation et liste des projets récents.
+
+La nouvelle page doit contenir :
+
+1. UNE NAVBAR EN HAUT (fond #0D1B4B) avec :
+- Logo AxiaBat à gauche
+- Rôle de l'utilisateur connecté au centre
+- Avatar + nom de l'utilisateur à droite
+- Bouton de déconnexion
+
+2. UNE SIDEBAR À GAUCHE (largeur 220px, fond blanc, bordure droite) avec ces liens :
+- Tableau de bord (icône dashboard) — actif par défaut
+- Projets (icône folder) → /Project3
+- Journal de chantier (icône notebook) → /JournalChantier
+- Gestion des délais (icône clock) → /Delais
+- Suivi budgétaire (icône credit-card) → /Décompte
+- Tableau de bord KPI (icône chart-bar) → /GlobalDash
+- Rapports PDF (icône file-text) → /Rapport
+- Séparateur
+- Administration (icône settings) → /UserManagement
+- Base de données (icône database) → /BaseDeDonnees
+
+3. CONTENU PRINCIPAL À DROITE avec :
+
+A) 4 CARTES KPI en haut (ligne horizontale) :
+- Nombre de projets actifs (bleu)
+- Avancement moyen en % (vert)
+- Nombre d'arrêts en cours (orange)
+- Nombre de rapports générés (violet)
+Ces données doivent venir de Firebase Firestore (collection "projets")
+
+B) SECTION "Projets récents" avec un tableau montrant :
+- Nom du projet
+- Statut (badge coloré)
+- Barre de progression (avancement en %)
+- Date de démarrage
+- Bouton "Ouvrir"
+Les données viennent de la collection Firestore "projets"
+
+C) SECTION "Actions rapides" avec 4 boutons :
+- Nouveau projet → /Project3
+- Saisir journal → /JournalChantier
+- Déclarer un arrêt → /Delais
+- Générer rapport → /Rapport
+
+4. STYLE GÉNÉRAL :
+- Fond page : #F0F4F8
+- Police : Segoe UI
+- Couleurs modules : bleu #1565C0, vert #43A047, orange #F57F17, violet #7E57C2
+- Cards blanches avec border-radius 14px et légère ombre
+- La sidebar doit s'adapter selon le rôle de l'utilisateur (conducteur voit seulement Journal, Délais, Budget)
+
+Garde tous les imports Firebase existants et utilise useAuth() pour récupérer l'utilisateur connecté et son rôle.
