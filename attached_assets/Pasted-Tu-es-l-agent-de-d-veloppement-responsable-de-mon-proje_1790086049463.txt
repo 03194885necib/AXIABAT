@@ -1,0 +1,106 @@
+Tu es l’agent de développement responsable de mon projet AXIABAT.
+
+OBJECTIF PRINCIPAL :
+Mettre à jour le code complet de l’application AXIABAT et synchroniser toutes les modifications avec le dépôt GitHub :
+https://github.com/03194885necib/AXIABAT
+
+IMPORTANT :
+- Ne supprime aucune fonctionnalité existante sans raison.
+- Conserve la structure actuelle du projet lorsqu’elle fonctionne.
+- Analyse d’abord le projet existant avant de modifier les fichiers.
+- Corrige les erreurs de compilation, d’importation et de configuration que tu rencontres.
+- Vérifie les chemins avec les majuscules/minuscules, notamment src/Pages et src/Components.
+- Ne crée pas de fichiers inutiles ou de doublons.
+- Ne modifie pas les données métier existantes sans nécessité.
+
+ÉTAPES À EFFECTUER :
+
+1. ANALYSER LE PROJET
+   - Identifier la structure React actuelle.
+   - Vérifier package.json.
+   - Vérifier package-lock.json.
+   - Vérifier src/.
+   - Vérifier les routes, pages et composants.
+   - Identifier les erreurs éventuelles.
+
+2. CORRIGER LE PROJET
+   - Corriger les imports incorrects.
+   - Corriger les chemins de fichiers.
+   - Corriger les erreurs React/JavaScript.
+   - Vérifier que toutes les pages référencées existent.
+   - Vérifier notamment :
+     src/Pages/auth/
+     src/Pages/admin/
+     src/Components/auth/
+     src/Components/shared/
+   - Vérifier l'import de ProjectSelector depuis les composants qui l'utilisent.
+   - Ne pas changer inutilement les versions des dépendances.
+
+3. TESTER LOCALEMENT
+   Exécuter :
+   npm install
+   npm run build
+
+   Le build doit terminer avec succès.
+
+   Si le build échoue :
+   - analyser l'erreur réelle ;
+   - corriger le problème ;
+   - relancer npm run build ;
+   - continuer jusqu'à obtenir un build valide, dans la mesure du possible.
+
+4. PRÉPARER LE DÉPLOIEMENT NETLIFY
+   Vérifier qu'un fichier netlify.toml existe à la racine du projet.
+
+   S'il n'existe pas, créer :
+
+   [build]
+     command = "npm run build"
+     publish = "build"
+
+   [[redirects]]
+     from = "/*"
+     to = "/index.html"
+     status = 200
+
+   Cette configuration doit permettre à React Router de fonctionner correctement sur Netlify.
+
+5. VÉRIFIER GIT
+   Exécuter :
+   git status
+   git branch
+   git remote -v
+
+   Le dépôt distant doit être :
+   https://github.com/03194885necib/AXIABAT.git
+
+6. SYNCHRONISER AVEC GITHUB
+   Avant de pousser :
+   git pull origin main --rebase
+
+   Puis :
+   git add .
+   git commit -m "Update AXIABAT application and deployment configuration"
+   git push origin main
+
+7. CONTRÔLE FINAL
+   Vérifier :
+   - que le push GitHub a réussi ;
+   - que la branche main contient les dernières modifications ;
+   - que npm run build fonctionne ;
+   - qu'aucun fichier important n'a été oublié.
+
+IMPORTANT :
+Ne me demande pas de copier manuellement chaque fichier.
+Travaille directement sur le projet existant.
+Si une erreur bloque une étape, analyse-la et corrige-la avant de continuer.
+
+À LA FIN, donne-moi un résumé clair :
+1. fichiers modifiés ;
+2. corrections effectuées ;
+3. résultat de npm run build ;
+4. commit Git créé ;
+5. résultat du git push ;
+6. éventuel problème restant pour Netlify.
+
+Ne fais pas de modification destructive du dépôt.
