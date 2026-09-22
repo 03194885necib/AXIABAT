@@ -152,7 +152,23 @@ function App() {
         }
       />
       <Route
+        path="/JournalChantier"
+        element={
+          <ProtectedRoute>
+            <JournalCHantier />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/Delais"
+        element={
+          <ProtectedRoute>
+            <Delais />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/Délais"
         element={
           <ProtectedRoute>
             <Delais />
@@ -164,6 +180,22 @@ function App() {
         element={
           <ProtectedRoute>
             <Decompte />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/Décompte"
+        element={
+          <ProtectedRoute>
+            <Decompte />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/Project3"
+        element={
+          <ProtectedRoute>
+            <ProjectForm />
           </ProtectedRoute>
         }
       />
@@ -196,6 +228,22 @@ function App() {
         element={
           <ProtectedRoute>
             <Rapport />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/UserManagement"
+        element={
+          <ProtectedRoute roles={[ROLES.ADMIN]}>
+            <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/BaseDeDonnees"
+        element={
+          <ProtectedRoute>
+            <BaseArticles />
           </ProtectedRoute>
         }
       />
