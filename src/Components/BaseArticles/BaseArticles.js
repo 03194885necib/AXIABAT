@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 import {
@@ -6,6 +6,10 @@ import {
   deleteDoc, doc, serverTimestamp, query, orderBy,
 } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
+import {
+  getArticleCatalogDatabaseState,
+  importArticleCatalog,
+} from "../../utils/articleCatalogImport";
 
 const C = {
   primary: "#1e3a5f", accent: "#f59e0b", success: "#10b981",
@@ -37,6 +41,8 @@ export default function BaseArticles() {
   const [formCategorie, setFormCategorie] = useState({ designation: "" });
   const [showCatForm, setShowCatForm] = useState(false);
   const [activeTab, setActiveTab] = useState("articles"); // "articles" | "categories"
+  const [importingCatalog, setImportingCatalog] = useState(false);
+  const [importReport, setImportReport] = useState(null);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -44,7 +50,7 @@ export default function BaseArticles() {
   };
 
   // Charger catégories et articles
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [catSnap, artSnap] = await Promise.all([
@@ -59,9 +65,9 @@ export default function BaseArticles() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   // Filtrer articles
   const articlesFiltres = articles.filter((a) => {
@@ -157,6 +163,32 @@ export default function BaseArticles() {
     }
   };
 
+  const handleImportCatalog = async () => {
+    setImportingCatalog(true);
+    setImportReport(null);
+    try {
+      const databaseState = await getArticleCatalogDatabaseState();
+      const confirmed = window.confirm(
+        `La base contient actuellement ${databaseState.articleCount} article(s) et ${databaseState.categoryCount} catégorie(s).\n\nImporter les 160 articles BTP du catalogue Excel ? Les éléments déjà présents seront conservés.`
+      );
+      if (!confirmed) return;
+
+      const report = await importArticleCatalog({ currentUser });
+      setImportReport(report);
+      await fetchData();
+      setActiveTab("articles");
+      showToast(`${report.newArticles} nouvel article(s) importé(s).`);
+    } catch (err) {
+      console.error("Erreur lors de l'import du catalogue BTP :", err);
+      setImportReport({
+        error: "L'import n'a pas pu être terminé. Aucune donnée partiellement préparée n'a été supprimée.",
+      });
+      showToast("Erreur lors de l'import du catalogue.", "error");
+    } finally {
+      setImportingCatalog(false);
+    }
+  };
+
   // Supprimer catégorie
   const handleDeleteCategorie = async (id, nom) => {
     const articlesLies = articles.filter((a) => a.categorie === id);
@@ -200,6 +232,16 @@ export default function BaseArticles() {
         </div>
         <div style={s.headerActions}>
           <button style={s.btnSecondary} onClick={() => navigate("/FirstPage")}>← Accueil</button>
+          {userProfile?.role === "admin" && (
+            <button
+              style={s.btnSecondary}
+              onClick={handleImportCatalog}
+              disabled={importingCatalog}
+              title="Importer le catalogue LES_ARTICLES.xlsx sans créer de doublons"
+            >
+              {importingCatalog ? "Import en cours..." : "⬆ Importer le catalogue BTP"}
+            </button>
+          )}
           {vue === "liste" && activeTab === "articles" && (
             <button style={s.btnPrimary} onClick={() => {
               setArticleEdit(null);
@@ -221,6 +263,41 @@ export default function BaseArticles() {
           )}
         </div>
       </div>
+
+      {importReport && (
+        <div style={s.importReport} role={importReport.error ? "alert" : "status"}>
+          {importReport.error ? (
+            <strong>{importReport.error}</strong>
+          ) : (
+            <>
+              <strong>Rapport d’import du catalogue BTP</strong>
+              <div style={s.importReportGrid}>
+                <span>Lignes Excel : <b>{importReport.physicalRows}</b></span>
+                <span>Rubriques détectées : <b>{importReport.detectedCategories}</b></span>
+                <span>Articles détectés : <b>{importReport.detectedArticles}</b></span>
+                <span>Articles avant import : <b>{importReport.beforeArticleCount}</b></span>
+                <span>Nouvelles catégories : <b>{importReport.createdCategories}</b></span>
+                <span>Nouveaux articles : <b>{importReport.newArticles}</b></span>
+                <span>Déjà existants : <b>{importReport.existingArticles}</b></span>
+                <span>Doublons ignorés : <b>{importReport.sourceDuplicates}</b></span>
+                <span>Erreurs : <b>{importReport.errors}</b></span>
+              </div>
+              {importReport.skippedArticles.length > 0 && (
+                <details style={s.importSkipped}>
+                  <summary>Articles non importés ({importReport.skippedArticles.length})</summary>
+                  <ul>
+                    {importReport.skippedArticles.map((item) => (
+                      <li key={`${item.line}-${item.designation}`}>
+                        {item.designation} — {item.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* VUE LISTE */}
       {vue === "liste" && (
@@ -610,4 +687,7 @@ const s = {
   emptyText: { fontSize: 14, color: "#64748b", marginBottom: 20 },
   center: { textAlign: "center", padding: 40, color: "#64748b" },
   toast: { position: "fixed", bottom: 24, right: 24, color: "#fff", padding: "12px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
+  importReport: { margin: "20px 32px 0", padding: "16px 20px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, color: "#1e3a5f", fontSize: 13 },
+  importReportGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "8px 20px", marginTop: 12 },
+  importSkipped: { marginTop: 12, color: "#991b1b" },
 };

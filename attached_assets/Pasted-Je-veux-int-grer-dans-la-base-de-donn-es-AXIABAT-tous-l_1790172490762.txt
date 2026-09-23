@@ -1,0 +1,301 @@
+Je veux intégrer dans la base de données AXIABAT tous les articles contenus dans le fichier Excel :
+
+LES ARTICLES.xlsx
+
+OBJECTIF
+========
+Importer proprement les articles BTP de ce fichier Excel dans le module "Articles" / "Bibliothèque des prix" de l'application AXIABAT.
+
+IMPORTANT :
+- Ne crée pas une nouvelle base de données.
+- Utilise la base de données actuellement utilisée par AXIABAT.
+- Analyse d'abord le schéma existant de la base de données.
+- Analyse également le code frontend/backend qui gère les articles.
+- Adapte l'importation à la structure réelle du projet.
+- Ne supprime aucun article déjà existant.
+- Ne crée pas de doublons.
+- Ne modifie pas les articles existants sans nécessité.
+- Fais une opération réversible ou transactionnelle lorsque cela est possible.
+
+FICHIER SOURCE
+=============
+LES ARTICLES.xlsx
+
+Le fichier contient une feuille :
+
+DC (3-3-2023)
+
+Les colonnes principales sont :
+
+- DESIGNATION DES OUVRAGES
+- U
+
+La première colonne Excel est vide et doit être ignorée.
+
+STRUCTURE DU FICHIER
+====================
+Le fichier contient des RUBRIQUES et des ARTICLES.
+
+Exemples de rubriques :
+
+- TRAVAUX GÉNIE CIVIL BETON
+- TRAVAUX DE TERRASSEMENTS GENERAUX & DIVERS
+- TRAVAUX DE CHAUSSEES ET DEPENDANCES TROTTOIRS
+- RESEAU D’EAU POTABLE
+- RESEAU D’EAUX USEES
+- RESEAU D’EAUX PLUVIALES
+- FOURREAUX ET TRAVAUX DIVERS
+- PANNEAUX SIGNALISATION
+- FONCAGE
+- SIGNALISATION VERTICALES
+- RESEAU TELEPHONIQUE
+- AMENAGEMENT DES ESPACES VERTS
+- EQUIPEMENTS STATION DE POMPAGE
+- DIVERT
+
+Ces lignes de rubrique ne doivent PAS être créées comme des articles.
+
+Les lignes qui possèdent une désignation d'ouvrage et une unité doivent être considérées comme des ARTICLES.
+
+EXEMPLES D'ARTICLES
+===================
+
+- BETON DE PROPRETE B1 — M3
+- BETON BANCHE : Béton de forme B3 — M3
+- BETON ARME POUR OUVRAGE DIVERS DOSE A 350 KG HRS/M3 B4 — M3
+- BETON ARME EN FONDATION DOSE A 400 KG CEM I 42.5 HRS/M3 B5 — M3
+- COUCHE DE DRAINAGE — M2
+- HERISSON DE 15 CM D’EPAISSEUR — M2
+- CHAPE ARMEE DE 13CM D'EPAISSEUR — M2
+- MAÇONNERIE EN BRIQUES EP 25 CM — M2
+- CURAGE DU RESEAU DES EAUX USEES — ml
+- FONÇAGES HORIZONTAUX POUR TRAVERSEE CHAUSSE — ml
+- DECAPAGE DE LA TERRE VEGITALE — m2
+- DEBLAIS MIS EN REMBLAIS — m3
+- REMBLAIS D’EMPRUNT — m3
+- TV 0/31.5 POUR COUCHE DE FONDATION — m3
+- REVETEMENT EN BETON BITUMINEUX 0/14 (ép. =5 cm) — m2
+- BORDURE DE TROTTOIR T 3 — ml
+- F,T,P CONDUITE GRAVITAIRE DE Ø 315 mm (PEHD PN 10 bars) — ml
+- CONDUITE GRAVITAIRE PVC Ø 315 — ml
+- RDV Ø 1000 ; 1,5 m < h ≤ 2,5 m — U
+- REGARD DE BRANCHEMENT Ø 800 — U
+- Conduite PVC Ø 110 — ml
+- Foncage de conduite Ø 315 — ml
+- Panneau « STOP » sur un poteau de 3.00m — U
+- Alvéoles PEHD de type A 0.0.4 — ml
+- Fourniture et pose d'une chambre type L3T avec trappe de fermeture — U
+- Abattage et évacuation d'arbres existants — U
+- Washingtonia robusta — U
+- Engazonnement type kukuyu en plaques — m2
+- GROUPES ELECTRO-POMPES IMMERGE Q=15l/s HMT=31 mce — Ens
+- EQUIPEMENTS ELECTRIQUES (Armoires de commandes) — Ens
+- GROUPE ELECTROGENE MOBILE 75 KVA — Ens
+- DEBITMETRE Ø 250 mm — Ens
+- PANIER DE DEGRILLEUR MECANIQUE en inox 304 L — Ens
+- DISPOSITIF RESERVOIR ANTI-BELIER (500 l) DE TYPE EAU USEE — Ens
+- TOUR A CHARBON ACTIF — Ens
+- REVETEMENT EN PRV ET EN PEINTURE RESINE EPOXY DE LA BACHE DE POMPAGE — M²
+- CAILLEBOTIS EN PRV — M²
+- CONDUITES EN POLYETHYLENE (PEHD) type ONAS PN10 de 250 mm — ml
+- Gabions destinés à la protection des ouvrages — M3
+
+NE PAS SE LIMITER AUX EXEMPLES :
+================================
+Il faut importer TOUS les articles du fichier Excel, pas seulement les exemples ci-dessus.
+
+REGLES D'IMPORTATION
+====================
+
+1. Lire le fichier Excel avec une bibliothèque compatible XLSX.
+
+2. Identifier automatiquement les rubriques.
+
+3. Conserver la rubrique courante comme catégorie de l'article.
+
+Exemple :
+
+RESEAU D’EAUX USEES
+    ↓
+CONDUITE GRAVITAIRE PVC Ø 315
+    unité = ml
+
+doit devenir quelque chose comme :
+
+category = "RESEAU D’EAUX USEES"
+designation = "CONDUITE GRAVITAIRE PVC Ø 315"
+unit = "ml"
+
+4. Nettoyer les espaces inutiles.
+
+5. Conserver les accents français :
+   é, è, ê, à, ç, œ, etc.
+
+6. Conserver les caractères techniques :
+   Ø
+   ≤
+   ≥
+   °
+   /
+   -
+   +
+   parenthèses
+
+7. Normaliser uniquement les unités lorsque nécessaire.
+
+Par exemple :
+   M3 → m3
+   M² → m2
+   M2 → m2
+   ml → ml
+   ML → ml
+   U → U
+   Ens → Ens
+   T → T
+
+Ne pas modifier la désignation technique elle-même.
+
+8. Les lignes contenant uniquement une rubrique et aucune unité/article doivent être ignorées comme articles.
+
+9. Les lignes vides doivent être ignorées.
+
+10. Les doublons doivent être détectés.
+
+UTILISATION DES CODES ARTICLES
+==============================
+Avant de créer un nouveau champ "code", analyse le modèle de données existant.
+
+Si AXIABAT possède déjà un champ code article :
+- respecter ce champ ;
+- ne pas casser le système existant.
+
+Si un code est obligatoire mais qu'aucun code n'est fourni dans le fichier Excel :
+- générer un identifiant stable du type ART-001, ART-002, ART-003...
+- ne pas utiliser le numéro de ligne Excel comme code si cela peut provoquer des conflits.
+
+Si le système possède déjà une codification BTP, utiliser la codification existante.
+
+PRIX
+====
+Le fichier ne contient pas de prix.
+
+Ne pas inventer de prix.
+
+Si la table article possède :
+- prix_unitaire
+- prix
+- montant
+- coût
+
+laisser ces valeurs à NULL ou à la valeur par défaut prévue par le système.
+
+NE PAS METTRE 0 automatiquement si NULL est accepté.
+
+STRUCTURE RECOMMANDEE
+=====================
+Si elle correspond au modèle existant, chaque article devrait pouvoir être associé à :
+
+- id
+- code
+- designation
+- unite
+- categorie
+- prix_unitaire
+- description
+- actif
+- created_at
+- updated_at
+
+Mais utilise PRIORITAIREMENT la structure réelle de la base AXIABAT.
+
+IMPORT IDEMPOTENT
+=================
+L'import doit être idempotent.
+
+Cela signifie que si je lance deux fois l'import du fichier Excel :
+
+- les mêmes articles ne doivent pas être insérés deux fois ;
+- les articles existants doivent être détectés ;
+- seul le premier import doit créer les nouveaux articles.
+
+Utiliser comme clé de détection, selon le schéma existant :
+
+designation + unite + categorie
+
+ou la clé unique déjà définie dans la base.
+
+BACKUP / SECURITE
+=================
+Avant l'insertion :
+
+1. Vérifier la connexion à la base.
+2. Vérifier le nombre actuel d'articles.
+3. Afficher ce nombre.
+4. Préparer l'import dans une transaction si possible.
+
+Ne pas supprimer les données existantes.
+
+RAPPORT D'IMPORT
+================
+Après l'import, afficher un rapport détaillé :
+
+Nombre de lignes Excel :
+Nombre de rubriques détectées :
+Nombre d'articles détectés :
+Nombre de nouveaux articles :
+Nombre d'articles déjà existants :
+Nombre de doublons ignorés :
+Nombre de lignes ignorées :
+Nombre d'erreurs :
+
+Afficher également la liste des articles qui n'ont pas pu être importés.
+
+VERIFICATION FRONTEND
+=====================
+Après l'import :
+
+- vérifier que le module Articles d'AXIABAT peut récupérer les nouveaux articles ;
+- vérifier que les catégories apparaissent correctement ;
+- vérifier que les unités apparaissent correctement ;
+- vérifier que les articles peuvent être sélectionnés dans les modules qui utilisent les articles ;
+- ne pas modifier le design existant inutilement.
+
+TEST
+====
+Après modification :
+
+npm run build
+
+Le build doit réussir sans erreur.
+
+Si le backend possède des tests, les exécuter également.
+
+GIT
+===
+Après validation :
+
+git status
+git add .
+git commit -m "Import BTP articles into AXIABAT database"
+git push origin main
+
+IMPORTANT :
+Avant le push, ne supprimer aucun fichier existant et ne modifier aucune configuration GitHub/Netlify sans nécessité.
+
+RESULTAT FINAL
+==============
+À la fin, donne-moi :
+
+1. le nombre exact d'articles trouvés dans Excel ;
+2. le nombre de catégories ;
+3. le nombre d'articles insérés ;
+4. le nombre de doublons ;
+5. le nombre d'erreurs ;
+6. la table/base utilisée ;
+7. les fichiers créés ou modifiés ;
+8. le résultat de npm run build ;
+9. le commit Git ;
+10. confirmation du push GitHub.
+
+NE FAIS PAS UNE SIMPLE MAQUETTE.
+L'OBJECTIF EST D'INSERER LES ARTICLES REELLEMENT DANS LA BASE DE DONNEES UTILISEE PAR AXIABAT.
