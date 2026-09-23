@@ -1,0 +1,200 @@
+Je ne vois toujours pas les articles dans :
+
+AXIABAT → Base de Données Articles
+
+Je veux que tu corriges ce problème complètement.
+
+OBJECTIF
+========
+Je veux que les 160 articles du fichier LES_ARTICLES_1790172479756.xlsx soient réellement disponibles dans :
+
+Base de Données Articles
+
+et visibles dans l'interface AXIABAT.
+
+IMPORTANT :
+Ne te contente pas de vérifier que le code d'import existe.
+Je veux vérifier la chaîne complète :
+
+Excel
+→ import
+→ Firestore
+→ collection articles
+→ récupération par AXIABAT
+→ affichage dans "Base de Données Articles".
+
+ÉTAPE 1 — ANALYSER L'INTERFACE
+==============================
+Ouvre :
+
+src/Components/BaseArticles/BaseArticles.js
+
+et identifie exactement :
+- comment les articles sont récupérés ;
+- quelle collection Firestore est utilisée ;
+- quels champs sont attendus ;
+- comment les catégories sont récupérées ;
+- quelles conditions peuvent empêcher l'affichage.
+
+Vérifie notamment que l'interface lit bien :
+
+collection("articles")
+
+et non une autre collection ou un ancien nom de collection.
+
+ÉTAPE 2 — VÉRIFIER FIRESTORE
+============================
+Vérifie la configuration Firebase utilisée par AXIABAT.
+
+Je veux savoir :
+- projet Firebase utilisé ;
+- environnement utilisé ;
+- collection "articles" ;
+- collection "categories".
+
+NE MODIFIE PAS LES DONNÉES EXISTANTES.
+
+Si la collection "articles" contient actuellement 0 document, indique-le clairement.
+
+ÉTAPE 3 — VÉRIFIER L'IMPORT
+============================
+Le fichier Excel contient :
+
+160 articles
+14 catégories
+
+Vérifie que :
+
+src/data/articleCatalog.js
+
+contient bien les 160 articles.
+
+Vérifie également :
+
+src/utils/articleCatalogImport.js
+
+et confirme que l'import écrit réellement dans :
+
+articles
+categories
+
+avec les champs attendus par BaseArticles.js.
+
+ÉTAPE 4 — CORRIGER LE PROBLÈME
+==============================
+Si les articles sont présents dans Firestore mais ne sont pas visibles :
+
+- corrige BaseArticles.js ;
+- corrige la récupération Firestore ;
+- corrige le mapping des champs ;
+- corrige le filtrage ;
+- corrige le chargement des catégories ;
+- ajoute un état "Chargement..." ;
+- ajoute un message clair si aucun article n'est trouvé.
+
+Si les articles ne sont PAS présents dans Firestore :
+
+- ne supprime aucune donnée ;
+- utilise la fonction d'import existante ;
+- prépare l'import des 160 articles ;
+- vérifie que l'utilisateur connecté possède bien les droits administrateur.
+
+ÉTAPE 5 — AFFICHAGE
+===================
+Dans "Base de Données Articles", je veux voir au minimum :
+
+CATÉGORIE | CODE | DÉSIGNATION | UNITÉ | PRIX
+
+Exemple :
+
+TRAVAUX GÉNIE CIVIL BETON
+ART-001
+BETON DE PROPRETE B1
+m3
+—
+
+TRAVAUX GÉNIE CIVIL BETON
+ART-002
+BETON BANCHE : Béton de forme B3
+m3
+—
+
+Le prix doit rester vide ou NULL puisque le fichier Excel ne contient pas de prix.
+
+ÉTAPE 6 — IMPORT
+================
+Je veux que le bouton :
+
+"⬆ Importer le catalogue BTP"
+
+soit clairement visible pour l'administrateur.
+
+Avant l'import, afficher :
+
+Articles dans Firestore : X
+Catégories dans Firestore : Y
+Articles dans le fichier : 160
+Catégories dans le fichier : 14
+
+Puis permettre :
+
+[ Importer le catalogue ]
+
+Après import afficher :
+
+Articles ajoutés : X
+Articles déjà existants : X
+Doublons ignorés : X
+Erreurs : X
+
+ÉTAPE 7 — NE PAS UTILISER UNE FAUSSE BASE
+=========================================
+Très important :
+
+Ne crée pas une nouvelle base de données.
+Ne crée pas une deuxième collection parallèle.
+Ne mets pas les articles uniquement dans un fichier JavaScript.
+
+Les données finales doivent être réellement enregistrées dans Firestore et récupérables par l'interface AXIABAT.
+
+ÉTAPE 8 — TEST
+==============
+Après correction :
+
+npm run build
+
+Puis teste la page :
+
+Base de Données Articles
+
+avec le compte administrateur.
+
+Vérifie que les articles apparaissent réellement.
+
+ÉTAPE 9 — GITHUB
+================
+Après correction :
+
+git add .
+git commit -m "Fix BTP article catalog display and Firestore import"
+git push origin main
+
+Si le push CLI GitHub échoue à cause de l'authentification, utilise l'intégration GitHub déjà autorisée.
+
+RÉSULTAT À ME DONNER
+====================
+Donne-moi clairement :
+
+1. Nombre d'articles actuellement présents dans Firestore.
+2. Nombre de catégories actuellement présentes.
+3. Nom exact des collections Firestore utilisées.
+4. Pourquoi les articles n'étaient pas visibles.
+5. Correction effectuée.
+6. Nombre d'articles maintenant visibles dans Base de Données Articles.
+7. Résultat de npm run build.
+8. Commit GitHub créé.
+9. Confirmation de synchronisation GitHub.
+
+IMPORTANT :
+Ne considère pas la tâche terminée simplement parce que le build réussit.
+La tâche est terminée uniquement lorsque les articles sont réellement récupérés depuis Firestore et visibles dans "Base de Données Articles".

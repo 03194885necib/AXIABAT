@@ -116,10 +116,26 @@ export async function importArticleCatalog({ currentUser } = {}) {
     )
   );
   const sourceArticleKeys = new Set();
+  const usedArticleNumbers = new Set(
+    existingArticles
+      .map((article) => String(article.numero || "").trim())
+      .filter(Boolean)
+  );
   const skippedArticles = [];
   let newArticles = 0;
   let existingArticleCount = 0;
   let sourceDuplicateCount = 0;
+  let nextArticleNumber = 1;
+
+  const getNextArticleNumber = () => {
+    let code = "";
+    do {
+      code = `ART-${String(nextArticleNumber).padStart(3, "0")}`;
+      nextArticleNumber += 1;
+    } while (usedArticleNumbers.has(code));
+    usedArticleNumbers.add(code);
+    return code;
+  };
 
   ARTICLE_CATALOG.articles.forEach((article, index) => {
     const categoryId = categoryIdsByKey.get(categoryKey(article.categorie));
@@ -146,7 +162,7 @@ export async function importArticleCatalog({ currentUser } = {}) {
 
     const articleRef = doc(collection(db, "articles"));
     batch.set(articleRef, {
-      numero: "",
+      numero: getNextArticleNumber(),
       designation: article.designation,
       unite: normalizeUnit(article.unite),
       categorie: categoryId,

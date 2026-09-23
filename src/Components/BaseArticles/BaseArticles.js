@@ -55,10 +55,20 @@ export default function BaseArticles() {
     try {
       const [catSnap, artSnap] = await Promise.all([
         getDocs(query(collection(db, "categories"), orderBy("designation"))),
-        getDocs(query(collection(db, "articles"), orderBy("numero"))),
+        // Some legacy articles do not have `numero`; ordering in Firestore
+        // would silently exclude those documents from the result set.
+        getDocs(collection(db, "articles")),
       ]);
       setCategories(catSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      setArticles(artSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setArticles(
+        artSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) =>
+            String(a.numero || "").localeCompare(String(b.numero || ""), "fr", {
+              numeric: true,
+            }) || String(a.designation || "").localeCompare(String(b.designation || ""), "fr")
+          )
+      );
     } catch (err) {
       console.error(err);
       showToast("Erreur lors du chargement.", "error");
