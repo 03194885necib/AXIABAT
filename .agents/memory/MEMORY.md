@@ -1,0 +1,1 @@
+- [Firestore catalog import](firestore-catalog-import.md) — run catalog writes from an authenticated admin session, not from build-time code.
