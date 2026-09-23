@@ -270,18 +270,25 @@ export default function BaseArticles() {
             <strong>{importReport.error}</strong>
           ) : (
             <>
-              <strong>Rapport d’import du catalogue BTP</strong>
+              <strong style={s.importReportTitle}>IMPORT DU CATALOGUE BTP</strong>
               <div style={s.importReportGrid}>
-                <span>Lignes Excel : <b>{importReport.physicalRows}</b></span>
-                <span>Rubriques détectées : <b>{importReport.detectedCategories}</b></span>
+                <span>Catégories détectées : <b>{importReport.detectedCategories}</b></span>
                 <span>Articles détectés : <b>{importReport.detectedArticles}</b></span>
-                <span>Articles avant import : <b>{importReport.beforeArticleCount}</b></span>
-                <span>Nouvelles catégories : <b>{importReport.createdCategories}</b></span>
+                <span>Déjà présents : <b>{importReport.existingArticles}</b></span>
                 <span>Nouveaux articles : <b>{importReport.newArticles}</b></span>
-                <span>Déjà existants : <b>{importReport.existingArticles}</b></span>
                 <span>Doublons ignorés : <b>{importReport.sourceDuplicates}</b></span>
                 <span>Erreurs : <b>{importReport.errors}</b></span>
               </div>
+              <p style={s.importSuccess}>Import terminé avec succès.</p>
+              <details style={s.importDetails}>
+                <summary>Afficher les détails techniques</summary>
+                <div style={s.importDetailsGrid}>
+                  <span>Lignes Excel : <b>{importReport.physicalRows}</b></span>
+                  <span>Lignes de données : <b>{importReport.dataRows}</b></span>
+                  <span>Articles avant import : <b>{importReport.beforeArticleCount}</b></span>
+                  <span>Nouvelles catégories : <b>{importReport.createdCategories}</b></span>
+                </div>
+              </details>
               {importReport.skippedArticles.length > 0 && (
                 <details style={s.importSkipped}>
                   <summary>Articles non importés ({importReport.skippedArticles.length})</summary>
@@ -688,6 +695,10 @@ const s = {
   center: { textAlign: "center", padding: 40, color: "#64748b" },
   toast: { position: "fixed", bottom: 24, right: 24, color: "#fff", padding: "12px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
   importReport: { margin: "20px 32px 0", padding: "16px 20px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, color: "#1e3a5f", fontSize: 13 },
+  importReportTitle: { display: "block", letterSpacing: 0.5, marginBottom: 12 },
   importReportGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "8px 20px", marginTop: 12 },
+  importSuccess: { margin: "14px 0 0", color: "#047857", fontWeight: 700 },
+  importDetails: { marginTop: 10, color: "#475569" },
+  importDetailsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "6px 20px", marginTop: 8, fontSize: 12 },
   importSkipped: { marginTop: 12, color: "#991b1b" },
 };
