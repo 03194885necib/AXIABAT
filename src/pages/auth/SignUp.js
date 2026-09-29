@@ -60,7 +60,7 @@ export default function SignUp() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      navigate("/FirstPage");
+      navigate("/home");
     } catch (err) {
       if (err.code === "auth/email-already-in-use") {
         setError("Cet email est déjà utilisé.");

@@ -6,6 +6,7 @@ import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Unauthorized from "./pages/auth/Unauthorized";
+import HomeLanding from "./pages/Home/Home";
 
 import UserManagement from "./pages/admin/UserManagement";
 
@@ -51,6 +52,14 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <HomeLanding />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Admin routes */}
       <Route
