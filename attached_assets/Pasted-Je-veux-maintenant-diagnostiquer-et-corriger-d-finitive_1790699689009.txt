@@ -1,0 +1,120 @@
+Je veux maintenant diagnostiquer et corriger définitivement l'erreur navigateur :
+
+"Invalid hook call"
+
+IMPORTANT :
+Ne modifier ni l'architecture Home,
+ni Firebase,
+ni Firestore,
+ni les données,
+ni les fonctionnalités existantes.
+
+La priorité est uniquement de rechercher la cause exacte de "Invalid hook call".
+
+Procédure obligatoire :
+
+1. Analyser package.json.
+
+2. Exécuter :
+
+npm ls react
+npm ls react-dom
+npm ls react-router-dom
+npm ls react-scripts
+
+3. Vérifier qu'il n'existe qu'une seule instance de :
+- react
+- react-dom
+
+4. Rechercher dans tout src/ les utilisations incorrectes des Hooks :
+
+useState
+useEffect
+useContext
+useMemo
+useCallback
+useNavigate
+useLocation
+useParams
+useAuth
+etc.
+
+5. Vérifier particulièrement :
+- Home
+- Header
+- Login
+- ProtectedRoute
+- FirstPage
+- Dashboard
+- BudgetDashboard
+- BaseArticles
+- composants récemment modifiés.
+
+6. Rechercher les imports React provenant de plusieurs chemins ou packages.
+
+7. Rechercher les composants ou fonctions qui appellent un Hook :
+- en dehors d'un composant React ;
+- dans une fonction normale ;
+- dans une condition ;
+- dans une boucle ;
+- après un return conditionnel ;
+- dans un module exécuté directement.
+
+8. Vérifier également les imports circulaires éventuels entre :
+Home
+Header
+ProtectedRoute
+App.js
+
+9. Ne pas masquer l'erreur avec une désactivation générale des règles React.
+
+10. Ne pas supprimer les Hooks simplement pour faire disparaître l'erreur.
+
+11. Identifier précisément le fichier et la ligne responsable.
+
+12. Corriger la cause réelle.
+
+13. Redémarrer complètement l'application.
+
+14. Tester :
+
+Connexion
+→ Home
+→ Gestion des projets
+→ Journal
+→ Délais
+→ Budget
+→ Tableau de bord
+→ Reporting
+→ Base de données
+→ Déconnexion
+
+15. Vérifier la console navigateur.
+
+Le message :
+
+"Invalid hook call"
+
+doit avoir disparu.
+
+16. Exécuter :
+
+npm run build
+
+Le build doit rester réussi.
+
+IMPORTANT :
+Avant de modifier quoi que ce soit, fournir le diagnostic de la cause probable avec le fichier concerné.
+
+Après correction, fournir :
+
+- cause exacte ;
+- fichier(s) corrigé(s) ;
+- correction appliquée ;
+- résultat npm ls react ;
+- résultat npm run build ;
+- confirmation que Invalid hook call a disparu.
+
+Ne pas créer de données de test dans Firestore.
+
+Si une correction nécessite une modification de dépendance, expliquer précisément pourquoi avant de l'appliquer.
