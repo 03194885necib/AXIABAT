@@ -23,6 +23,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth, ROLE_LABELS, ROLES } from "../../context/AuthContext";
 import { db } from "../../firebase";
 import AxiaBatLogo from "./logo2.png";
+import BackToHome from "../shared/BackToHome";
 import "./FirstPage.css";
 
 const navigationItems = [
@@ -187,6 +188,7 @@ function FirstPage() {
 
   return (
     <div className="dashboard-shell">
+      <BackToHome />
       <header className="dashboard-navbar">
         <button className="mobile-menu-button" type="button" aria-label="Ouvrir le menu" onClick={() => setSidebarOpen(true)}>
           <FiMenu />

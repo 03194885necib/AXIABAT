@@ -3,6 +3,7 @@ import { db } from "../../firebase";
 import { collection, addDoc } from 'firebase/firestore';
 import ProjectDetailsForm from './ProjectDetailsForm';
 import ArticleSelection from './ArticleSelection';
+import BackToHome from "../../Components/shared/BackToHome";
 
 const ProjectForm = () => {
   const [step, setStep] = useState(1);
@@ -60,26 +61,29 @@ const ProjectForm = () => {
   };
 
   return (
-    <div className="project-form-container">
+    <div>
+      <BackToHome />
+      <div className="project-form-container">
      
-      {step === 1 && (
-        <ProjectDetailsForm 
-          onSubmit={handleProjectSubmit} 
-          initialData={project} 
-        />
-      )}
+        {step === 1 && (
+          <ProjectDetailsForm
+            onSubmit={handleProjectSubmit}
+            initialData={project}
+          />
+        )}
 
-      {step === 2 && (
-        <ArticleSelection
-          project={project}
-          selectedArticles={selectedArticles}
-          setSelectedArticles={setSelectedArticles}
-          projectArticles={projectArticles}
-          setProjectArticles={setProjectArticles}
-          onFinalSubmit={handleFinalSubmit}
-          onBack={() => setStep(1)}
-        />
-      )}
+        {step === 2 && (
+          <ArticleSelection
+            project={project}
+            selectedArticles={selectedArticles}
+            setSelectedArticles={setSelectedArticles}
+            projectArticles={projectArticles}
+            setProjectArticles={setProjectArticles}
+            onFinalSubmit={handleFinalSubmit}
+            onBack={() => setStep(1)}
+          />
+        )}
+      </div>
     </div>
   );
 };

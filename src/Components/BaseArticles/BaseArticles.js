@@ -10,6 +10,7 @@ import {
   getArticleCatalogDatabaseState,
   importArticleCatalog,
 } from "../../utils/articleCatalogImport";
+import BackToHome from "../shared/BackToHome";
 
 const C = {
   primary: "#1e3a5f", accent: "#f59e0b", success: "#10b981",
@@ -314,7 +315,9 @@ export default function BaseArticles() {
   const getCatNom = (id) => categories.find((c) => c.id === id)?.designation || "—";
 
   return (
-    <div style={s.page}>
+    <>
+      <BackToHome />
+      <div style={s.page}>
       {toast && (
         <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
           {toast.msg}
@@ -770,7 +773,8 @@ export default function BaseArticles() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
