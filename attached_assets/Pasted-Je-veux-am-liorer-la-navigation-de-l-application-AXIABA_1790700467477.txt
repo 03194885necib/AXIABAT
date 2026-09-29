@@ -1,0 +1,173 @@
+Je veux améliorer la navigation de l'application AXIABAT.
+
+OBJECTIF
+Ajouter un bouton permanent :
+
+← Retour à l'accueil
+
+en haut de chaque module accessible depuis la page /home.
+
+PROBLÈME ACTUEL
+Après l'entrée dans certains modules, notamment :
+- Gestion des projets
+- Journal de chantier
+- Gestion des délais
+- Suivi budgétaire
+- Tableau de bord
+- Reporting
+- Base de données
+
+certains modules n'affichent pas correctement le header/menu principal ou ne permettent pas facilement de revenir à la page d'accueil.
+
+SOLUTION DEMANDÉE
+Créer un composant de navigation réutilisable, par exemple :
+
+src/Components/shared/BackToHome.js
+
+ou utiliser un composant partagé existant si une solution équivalente existe déjà.
+
+Le composant doit afficher :
+
+← Retour à l'accueil
+
+et naviguer vers :
+
+/home
+
+COMPORTEMENT
+1. Le bouton doit être placé EN HAUT de la page/module.
+2. Il doit être visible immédiatement après l'ouverture du module.
+3. Il doit fonctionner sur PC, tablette et mobile.
+4. Il doit être suffisamment visible et professionnel.
+5. Utiliser le système de navigation React Router déjà présent dans le projet.
+6. Ne pas utiliser window.location.reload().
+7. Ne pas créer une nouvelle page Home.
+8. Ne pas créer une nouvelle collection Firebase.
+9. Ne pas modifier la logique métier existante des modules.
+10. Ne pas supprimer les menus ou fonctionnalités existants.
+
+MODULES À VÉRIFIER
+
+Ajouter ce bouton dans les pages principales correspondant aux modules :
+
+1. Gestion des projets
+2. Journal de chantier
+3. Gestion des délais
+4. Suivi budgétaire
+5. Tableau de bord
+6. Reporting
+7. Base de données
+
+IMPORTANT
+Le bouton doit être présent même si le module possède déjà son propre header.
+
+S'il existe déjà plusieurs composants Header/Menu/Navigation dans le projet, ne pas les remplacer inutilement.
+Créer plutôt un composant partagé réutilisable et l'intégrer proprement.
+
+DESIGN
+Le bouton doit être placé par exemple :
+
+------------------------------------------------
+← Retour à l'accueil
+------------------------------------------------
+Titre du module
+Contenu du module
+
+Utiliser le style visuel professionnel AXIABAT déjà présent dans l'application.
+
+Prévoir :
+- icône flèche retour
+- texte "Retour à l'accueil"
+- effet hover
+- bonne lisibilité
+- marge/padding correct
+- responsive mobile
+
+IMPORTANT POUR LES ROUTES
+Conserver les routes actuelles des modules.
+
+La page d'accueil reste :
+
+/home
+
+Le Dashboard existant reste :
+
+/FirstPage
+
+Le suivi budgétaire reste :
+
+/BudgetDashboard
+
+Ne pas renommer ces routes et ne pas créer de doublons.
+
+GESTION DES PROJETS
+Vérifier précisément quelle page/composant correspond actuellement à "Gestion des projets" et ajouter le bouton à cette page.
+
+JOURNAL DE CHANTIER
+Identifier la page actuelle du Journal de chantier et ajouter le bouton.
+
+GESTION DES DÉLAIS
+Identifier la page actuelle et ajouter le bouton.
+
+SUIVI BUDGÉTAIRE
+Ajouter le bouton sur la page /BudgetDashboard.
+
+TABLEAU DE BORD
+Ajouter le bouton sur /FirstPage.
+
+REPORTING
+Identifier la page actuelle du Reporting et ajouter le bouton.
+
+BASE DE DONNÉES
+Ajouter le bouton sur la page principale de la Base de données.
+
+NE PAS FAIRE
+- Ne pas recréer les modules.
+- Ne pas recréer les routes.
+- Ne pas modifier Firebase Auth.
+- Ne pas modifier Firestore.
+- Ne pas supprimer de fonctionnalités existantes.
+- Ne pas modifier les données.
+- Ne pas modifier la structure de la base de données.
+- Ne pas remplacer le Dashboard par Home.
+- Ne pas faire de /home une page Dashboard.
+
+TESTS OBLIGATOIRES
+
+Après modification :
+
+1. Vérifier que npm run build fonctionne.
+2. Vérifier qu'il n'y a aucune nouvelle erreur de compilation.
+3. Vérifier chaque route.
+4. Vérifier que "← Retour à l'accueil" est visible.
+5. Cliquer sur le bouton et vérifier le retour vers /home.
+6. Vérifier que le bouton fonctionne sur desktop et mobile.
+7. Vérifier que les modules existants continuent de fonctionner.
+
+TESTER AU MINIMUM :
+
+/home
+/FirstPage
+/BudgetDashboard
+
+et les routes actuelles de :
+- Gestion des projets
+- Journal de chantier
+- Gestion des délais
+- Reporting
+- Base de données
+
+IMPORTANT
+Avant de modifier le code, inspecte l'architecture actuelle et les routes existantes afin d'intégrer le bouton aux bons composants.
+
+À LA FIN
+Donne-moi :
+1. les fichiers modifiés ;
+2. les routes vérifiées ;
+3. le résultat de npm run build ;
+4. les éventuelles erreurs restantes ;
+5. un résumé très court des modifications.
+
+Puis commit et push les modifications sur GitHub avec le message :
+
+"Add return to home navigation across modules"
