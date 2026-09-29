@@ -1,0 +1,322 @@
+Je veux ajouter dans AXIABAT une fonction permanente permettant à un administrateur d'ajouter manuellement un article à la base de données.
+
+MODULE :
+Base de Données Articles
+
+OBJECTIF
+========
+Ajouter un bouton :
+
+[ + Ajouter un article ]
+
+Chaque fois que l'administrateur clique sur ce bouton, un formulaire doit s'ouvrir et permettre de créer un nouvel article directement dans Firestore.
+
+IMPORTANT :
+Ce système doit fonctionner indépendamment de l'import Excel.
+Je veux pouvoir ajouter un article à tout moment, même plusieurs mois après l'import initial.
+
+1. BOUTON
+=========
+Dans la page :
+
+Base de Données Articles
+
+ajouter un bouton clairement visible :
+
++ Ajouter un article
+
+Le bouton doit être accessible uniquement aux utilisateurs autorisés à gérer la base des articles.
+
+2. FORMULAIRE
+=============
+Créer un formulaire avec les champs suivants :
+
+- Code article
+- Catégorie
+- Désignation
+- Unité
+- Prix unitaire
+- Description
+- Actif
+
+Présentation :
+
+Code article :
+[____________]
+
+Catégorie :
+[▼ Sélectionner une catégorie]
+
+Désignation :
+[____________________________]
+
+Unité :
+[▼ ou saisie libre]
+
+Prix unitaire :
+[____________]
+
+Description :
+[____________________________]
+
+Actif :
+☑ Oui
+
+Boutons :
+
+[ Annuler ]   [ Enregistrer ]
+
+3. CATÉGORIES
+=============
+La liste Catégorie doit utiliser la collection Firestore existante :
+
+categories
+
+Ne pas créer une deuxième collection de catégories.
+
+L'utilisateur doit pouvoir sélectionner une catégorie existante.
+
+Ajouter également une possibilité :
+
+[ + Nouvelle catégorie ]
+
+uniquement si cette fonction est compatible avec le système actuel.
+
+4. UNITÉS
+=========
+Prévoir les unités courantes BTP :
+
+- U
+- ml
+- m2
+- m3
+- Ens
+- T
+- kg
+- forfait
+- autre
+
+L'utilisateur doit également pouvoir saisir une unité personnalisée si nécessaire.
+
+5. VALIDATION
+=============
+Avant l'enregistrement :
+
+La désignation est obligatoire.
+L'unité est obligatoire.
+La catégorie est obligatoire.
+
+Le code article doit être unique s'il est utilisé par la base actuelle.
+
+Le prix unitaire doit être numérique ou vide.
+
+Ne jamais accepter un prix texte invalide.
+
+6. DOUBLON
+==========
+Avant de créer l'article, rechercher dans Firestore si un article existe déjà avec :
+
+désignation + unité + catégorie
+
+Si un doublon existe :
+
+afficher :
+
+"Cet article existe déjà dans la base de données."
+
+et proposer :
+
+[ Annuler ]
+
+Ne pas créer de doublon.
+
+7. ENREGISTREMENT FIRESTORE
+===========================
+Utiliser la collection Firestore existante :
+
+articles
+
+Respecter exactement la structure déjà utilisée par :
+
+BaseArticles.js
+articleCatalog.js
+articleCatalogImport.js
+
+Ne pas créer une nouvelle collection.
+
+Enregistrer au minimum les informations nécessaires au fonctionnement actuel :
+
+{
+  code,
+  designation,
+  unite,
+  categorie,
+  prix_unitaire,
+  description,
+  actif,
+  created_at,
+  updated_at
+}
+
+Mais avant de créer ces champs, vérifier la structure réelle actuellement utilisée dans Firestore et réutiliser les noms de champs existants.
+
+8. CODE ARTICLE
+===============
+Si le code article est obligatoire dans le modèle actuel :
+
+générer automatiquement le prochain code disponible.
+
+Exemple :
+
+ART-001
+ART-002
+ART-003
+...
+
+L'administrateur peut éventuellement modifier le code avant l'enregistrement si le système le permet.
+
+Ne jamais créer un code déjà existant.
+
+9. APRÈS ENREGISTREMENT
+=======================
+Après succès :
+
+afficher :
+
+"Article ajouté avec succès."
+
+Puis actualiser automatiquement la liste des articles.
+
+L'article nouvellement créé doit apparaître immédiatement dans :
+
+Base de Données Articles
+
+sans avoir besoin de redémarrer l'application.
+
+10. MODIFICATION
+=================
+Prévoir également pour chaque article existant un bouton :
+
+✏ Modifier
+
+permettant à l'administrateur de modifier :
+
+- désignation
+- catégorie
+- unité
+- prix unitaire
+- description
+- actif
+
+Ne pas permettre de modifier l'ID Firestore.
+
+11. SUPPRESSION
+===============
+Ne pas supprimer définitivement un article par défaut.
+
+Prévoir plutôt :
+
+Actif = Oui / Non
+
+Ainsi un article peut être désactivé sans perdre son historique.
+
+Si un bouton Supprimer existe déjà, vérifier qu'il respecte cette logique.
+
+12. RECHERCHE
+============
+La page Base de Données Articles doit permettre de rechercher un article par :
+
+- code
+- désignation
+- catégorie
+- unité
+
+13. INTERFACE
+=============
+Conserver le design actuel d'AXIABAT.
+
+Utiliser les composants déjà présents dans le projet.
+
+Ne pas créer une nouvelle architecture inutile.
+
+Le formulaire doit être propre et adapté à une application professionnelle BTP.
+
+14. FIRESTORE
+============
+Très important :
+
+Utiliser la même configuration Firebase actuellement utilisée par AXIABAT.
+
+Utiliser la collection :
+
+articles
+
+et la collection :
+
+categories
+
+Ne créer aucune nouvelle base.
+
+15. SÉCURITÉ
+============
+Seuls les utilisateurs ayant les droits administrateur doivent pouvoir :
+
+- ajouter un article ;
+- modifier un article ;
+- désactiver un article.
+
+Les utilisateurs standards peuvent uniquement consulter les articles si leurs permissions actuelles le permettent.
+
+16. TEST
+========
+Tester :
+
+A. Ajouter un article
+B. Vérifier qu'il apparaît dans la liste
+C. Actualiser la page
+D. Vérifier qu'il est toujours présent
+E. Essayer d'ajouter exactement le même article
+F. Vérifier que le doublon est refusé
+G. Modifier le prix
+H. Vérifier que le prix est correctement enregistré
+I. Désactiver l'article
+J. Vérifier qu'il n'est plus proposé comme article actif
+
+17. BUILD
+=========
+Exécuter :
+
+npm run build
+
+Corriger toute erreur de compilation.
+
+18. GITHUB
+=========
+Après validation :
+
+git add .
+git commit -m "Add manual BTP article management"
+git push origin main
+
+Si le push CLI échoue à cause de l'authentification GitHub, utiliser l'intégration GitHub déjà autorisée.
+
+19. RAPPORT FINAL
+=================
+À la fin, indique :
+
+- fichiers créés/modifiés ;
+- collection Firestore utilisée ;
+- champs utilisés ;
+- fonctionnement du bouton Ajouter un article ;
+- test d'ajout réussi ou non ;
+- test anti-doublon réussi ou non ;
+- test modification réussi ou non ;
+- test désactivation réussi ou non ;
+- résultat npm run build ;
+- commit GitHub ;
+- synchronisation GitHub.
+
+IMPORTANT :
+La fonctionnalité doit être réellement opérationnelle dans AXIABAT.
+Ne crée pas uniquement une maquette visuelle.
+L'article doit être réellement enregistré dans Firestore et réapparaître après actualisation de la page.

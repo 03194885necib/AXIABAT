@@ -1,1 +1,2 @@
 - [Firestore catalog import](firestore-catalog-import.md) — run catalog writes from an authenticated admin session, not from build-time code.
+- [GitHub API synchronization](github-api-sync.md) — publish file trees in one low-request batch to stay below the integration rate limit.

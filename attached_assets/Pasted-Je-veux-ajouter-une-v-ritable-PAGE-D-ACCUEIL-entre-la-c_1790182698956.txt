@@ -1,0 +1,38 @@
+Je veux ajouter une véritable PAGE D'ACCUEIL entre la connexion et les modules de l'application. 
+Actuellement, après la connexion, l'utilisateur arrive directement dans l'application sans écran 
+intermédiaire de sélection d'espace de travail.
+
+L'architecture cible à 3 niveaux est :
+1. Connexion (existante, ne pas modifier)
+2. NOUVELLE PAGE D'ACCUEIL (à créer) — portail de sélection des modules
+3. Module sélectionné (existant, ne pas modifier le contenu des modules)
+
+SPÉCIFICATIONS DE LA PAGE D'ACCUEIL :
+
+- Créer un nouveau composant src/pages/Accueil.jsx (ou src/components/Accueil.jsx selon la 
+  structure du projet — vérifie d'abord l'arborescence existante de src/ avant de choisir 
+  l'emplacement).
+- Cette page doit s'afficher juste après l'authentification réussie, AVANT toute redirection 
+  vers un module. Modifie la logique de routing (React Router) pour que la route par défaut 
+  post-connexion pointe vers cette nouvelle page, et non plus directement vers un module.
+- Contenu de la page :
+  - En-tête avec le logo AXIABAT et le message "Bienvenue sur AXIABAT" suivi du sous-titre 
+    "Votre espace de gestion des projets et chantiers BTP"
+  - Une salutation personnalisée si l'email/nom de l'utilisateur connecté est disponible 
+    (ex: "Bonjour, [nom]")
+  - Une grille de grandes cartes cliquables (utilise le composant de carte déjà utilisé dans 
+    l'application pour rester cohérent visuellement), une par module :
+    📁 Projets · 🏗️ Chantiers · 📅 Planning · 📋 Journal de chantier · 💰 Décomptes · 
+    📦 Stocks · 👷 Ressources humaines · 📊 Tableaux de bord & KPI · 📄 Rapports · ⚙️ Paramètres
+  - Chaque carte redirige vers la route existante du module correspondant (réutilise les routes 
+    déjà en place, ne recrée pas les modules).
+  - Garde le même style visuel (couleurs, police, icônes) que le reste de l'application pour 
+    la cohérence.
+- Ajoute aussi un bouton ou lien "Retour à l'accueil" visible dans chaque module (dans la barre 
+  de navigation ou le header) pour permettre à l'utilisateur de revenir à cette page d'accueil 
+  depuis n'importe quel module.
+- Ne touche à aucun code métier des modules existants (Journal de chantier, Gestion des délais, 
+  Suivi budgétaire, etc.) — uniquement à la page d'accueil et au routing.
+
+Une fois fait, montre-moi la nouvelle arborescence des routes et confirme quelle route est 
+maintenant la destination par défaut après connexion.

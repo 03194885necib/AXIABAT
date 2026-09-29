@@ -1,0 +1,615 @@
+Je veux mettre en place la structure définitive de navigation d'AXIABAT.
+
+ARCHITECTURE OBLIGATOIRE
+========================
+
+Le parcours utilisateur doit être exactement :
+
+🔐 1. CONNEXION
+        ↓
+🏠 2. HOME
+   PAGE D'ACCUEIL AXIABAT
+        │
+        ├── 📁 Gestion des projets
+        ├── 📓 Journal de chantier
+        ├── ⏱ Gestion des délais
+        ├── 💰 Suivi budgétaire
+        ├── 📊 Tableau de bord
+        ├── 📈 Reporting
+        └── 🗄 Base de données
+
+
+==================================================
+1. CONNEXION
+==================================================
+
+Conserver la page Login actuelle.
+
+Utiliser Firebase Authentication déjà présent dans AXIABAT.
+
+Après connexion réussie :
+
+/login
+   ↓
+/home
+
+NE PAS envoyer directement l'utilisateur vers /dashboard.
+
+Conserver ProtectedRoute et toutes les protections existantes.
+
+Après déconnexion :
+
+/home
+   ↓
+/login
+
+
+==================================================
+2. HOME — PAGE D'ACCUEIL AXIABAT
+==================================================
+
+Créer une page indépendante :
+
+/home
+
+Cette page est la véritable page d'accueil d'AXIABAT.
+
+Créer si nécessaire :
+
+src/Pages/Home/Home.js
+src/Pages/Home/Home.css
+
+La page doit présenter AXIABAT avant que l'utilisateur accède aux différents modules.
+
+CONTENU PRINCIPAL :
+
+AXIABAT
+
+"Plateforme intégrée de gestion des projets BTP"
+
+Puis un texte de présentation :
+
+"AXIABAT est une plateforme digitale destinée à centraliser,
+piloter et suivre les projets BTP, les travaux, les délais,
+les coûts, les indicateurs et le reporting."
+
+Afficher également une phrase :
+
+"Pilotez vos projets BTP depuis une plateforme unique."
+
+
+==================================================
+3. LES 7 RUBRIQUES ACCESSIBLES DEPUIS HOME
+==================================================
+
+La Home doit donner accès aux 7 rubriques suivantes :
+
+1. 📁 Gestion des projets
+2. 📓 Journal de chantier
+3. ⏱ Gestion des délais
+4. 💰 Suivi budgétaire
+5. 📊 Tableau de bord
+6. 📈 Reporting
+7. 🗄 Base de données
+
+IMPORTANT :
+
+Il y a donc :
+
+6 modules opérationnels :
+
+1. Gestion des projets
+2. Journal de chantier
+3. Gestion des délais
+4. Suivi budgétaire
+5. Tableau de bord
+6. Reporting
+
+ET une rubrique complémentaire :
+
+7. Base de données
+
+
+==================================================
+4. PRÉSENTATION DES 7 RUBRIQUES SUR HOME
+==================================================
+
+Afficher les 7 rubriques sous forme de cartes modernes.
+
+-----------------------------------
+📁 GESTION DES PROJETS
+-----------------------------------
+
+"Créer, organiser et suivre les projets BTP."
+
+Bouton :
+
+"Accéder"
+
+Le clic doit ouvrir le module Projet déjà existant.
+
+-----------------------------------
+📓 JOURNAL DE CHANTIER
+-----------------------------------
+
+"Enregistrer et suivre les activités quotidiennes du chantier."
+
+Bouton :
+
+"Accéder"
+
+Utiliser le module Journal existant.
+
+-----------------------------------
+⏱ GESTION DES DÉLAIS
+-----------------------------------
+
+"Suivre les délais contractuels, les arrêts et les retards."
+
+Bouton :
+
+"Accéder"
+
+Utiliser le module Délais existant.
+
+-----------------------------------
+💰 SUIVI BUDGÉTAIRE
+-----------------------------------
+
+"Suivre les coûts, dépenses, engagements et écarts."
+
+Bouton :
+
+"Accéder"
+
+Utiliser le module Budget existant.
+
+-----------------------------------
+📊 TABLEAU DE BORD
+-----------------------------------
+
+"Visualiser les indicateurs clés et l'état général des projets."
+
+Bouton :
+
+"Accéder au tableau de bord"
+
+IMPORTANT :
+
+Conserver intégralement le Tableau de bord actuellement développé.
+
+NE PAS le supprimer.
+
+NE PAS le remplacer par Home.
+
+-----------------------------------
+📈 REPORTING
+-----------------------------------
+
+"Analyser les performances et générer les rapports de suivi."
+
+Ce module doit utiliser les fonctionnalités de reporting déjà présentes dans AXIABAT.
+
+Si les rapports PDF existent déjà, les conserver.
+
+-----------------------------------
+🗄 BASE DE DONNÉES
+-----------------------------------
+
+"Accéder aux données de référence utilisées par AXIABAT."
+
+Cette rubrique doit permettre d'accéder notamment à :
+
+- Base de Données Articles
+- catégories
+- bibliothèque des articles
+- autres données de référence existantes
+
+Conserver la fonction :
+
+"+ Ajouter un article"
+
+Conserver également :
+
+"Importer le catalogue BTP"
+
+
+==================================================
+5. NAVIGATION PRINCIPALE
+==================================================
+
+Dans l'interface après connexion, créer une navigation cohérente.
+
+Elle doit contenir :
+
+🏠 Home
+
+📁 Projets
+
+📓 Journal
+
+⏱ Délais
+
+💰 Budget
+
+📊 Tableau de bord
+
+📈 Reporting
+
+🗄 Base de données
+
+L'élément actuellement sélectionné doit être visuellement identifiable.
+
+Lorsque l'utilisateur est sur Home :
+
+🏠 Home = actif
+
+
+==================================================
+6. HOME NE DOIT PAS ÊTRE LE DASHBOARD
+==================================================
+
+IMPORTANT :
+
+Home et Dashboard sont deux pages différentes.
+
+HOME :
+
+Objectif :
+- présentation d'AXIABAT ;
+- accueil ;
+- orientation ;
+- accès aux fonctionnalités.
+
+DASHBOARD :
+
+Objectif :
+- indicateurs ;
+- statistiques ;
+- projets actifs ;
+- avancement ;
+- arrêts ;
+- rapports ;
+- données de pilotage.
+
+Le Dashboard actuel doit rester fonctionnel.
+
+Ne pas déplacer ses fonctionnalités dans Home.
+
+Ne pas supprimer ses composants.
+
+
+==================================================
+7. DESIGN
+==================================================
+
+Conserver l'identité graphique actuelle d'AXIABAT.
+
+Utiliser :
+
+- bleu foncé ;
+- bleu ;
+- blanc ;
+- orange AXIABAT.
+
+Utiliser le logo AXIABAT existant.
+
+Les cartes doivent avoir :
+
+- coins arrondis ;
+- ombres légères ;
+- icônes ;
+- titres ;
+- descriptions ;
+- bouton d'accès ;
+- effet hover.
+
+Design professionnel adapté à une plateforme de gestion BTP.
+
+La Home doit donner une impression de plateforme professionnelle de gestion de projets.
+
+
+==================================================
+8. HEADER
+==================================================
+
+Créer un header professionnel.
+
+À gauche :
+
+LOGO AXIABAT
+
+Au centre ou dans le menu :
+
+🏠 Home
+📁 Projets
+📓 Journal
+⏱ Délais
+💰 Budget
+📊 Tableau de bord
+📈 Reporting
+🗄 Base de données
+
+À droite :
+
+- utilisateur connecté ;
+- rôle ;
+- avatar si disponible ;
+- Déconnexion.
+
+
+==================================================
+9. RESPONSIVE
+==================================================
+
+La Home doit fonctionner correctement sur :
+
+PC
+Tablette
+Téléphone
+
+Sur PC :
+
+grille de cartes.
+
+Sur tablette :
+
+2 colonnes.
+
+Sur téléphone :
+
+1 colonne.
+
+Aucun débordement horizontal.
+
+Les boutons doivent être facilement utilisables sur écran tactile.
+
+
+==================================================
+10. ROUTES
+==================================================
+
+Avant toute modification :
+
+analyser src/App.js et toutes les routes existantes.
+
+Créer uniquement la route :
+
+/home
+
+Puis conserver les routes existantes des modules.
+
+Structure logique :
+
+/login
+
+/home
+
+/projects
+
+/journal
+
+/delays
+
+/budget
+
+/dashboard
+
+/reporting
+
+/database
+
+Mais si les routes actuelles ont d'autres noms, les conserver et utiliser les routes existantes.
+
+NE PAS créer de routes en doublon.
+
+
+==================================================
+11. FIREBASE
+==================================================
+
+Conserver Firebase Authentication.
+
+Conserver Firestore.
+
+Ne créer aucune nouvelle base.
+
+Ne modifier aucune collection existante sans nécessité.
+
+La Home peut récupérer les informations de l'utilisateur connecté.
+
+Ne pas supprimer de données.
+
+
+==================================================
+12. BASE DE DONNÉES
+==================================================
+
+La rubrique :
+
+🗄 Base de données
+
+doit conserver les fonctionnalités déjà développées :
+
+- Articles
+- Catégories
+- Import catalogue BTP
+- Ajouter un article
+
+La collection Firestore "articles" existante doit être conservée.
+
+La collection "categories" existante doit être conservée.
+
+
+==================================================
+13. TEST OBLIGATOIRE
+==================================================
+
+Tester exactement le parcours :
+
+TEST 1
+------
+
+Ouvrir AXIABAT.
+
+Résultat :
+
+🔐 Connexion
+
+
+TEST 2
+------
+
+Se connecter.
+
+Résultat :
+
+🏠 Home
+
+
+TEST 3
+------
+
+Vérifier que Home affiche :
+
+AXIABAT
+Présentation
+7 cartes/rubriques
+
+
+TEST 4
+------
+
+Cliquer successivement sur :
+
+📁 Gestion des projets
+📓 Journal de chantier
+⏱ Gestion des délais
+💰 Suivi budgétaire
+📊 Tableau de bord
+📈 Reporting
+🗄 Base de données
+
+
+TEST 5
+------
+
+Vérifier que chaque rubrique ouvre la bonne page existante.
+
+
+TEST 6
+------
+
+Dans Base de données :
+
+vérifier :
+
+Base de Données Articles
+
++ Ajouter un article
+
+Importer le catalogue BTP
+
+
+TEST 7
+------
+
+Se déconnecter.
+
+Résultat :
+
+🔐 Connexion
+
+
+==================================================
+14. BUILD
+==================================================
+
+Exécuter :
+
+npm run build
+
+Corriger toute erreur de compilation.
+
+Les warnings ESLint existants peuvent être signalés mais ne doivent pas empêcher le build.
+
+
+==================================================
+15. GITHUB
+==================================================
+
+Après validation :
+
+git add .
+
+git commit -m "Create AXIABAT Home page and application navigation"
+
+git push origin main
+
+Si le push CLI échoue à cause de l'authentification GitHub :
+
+utiliser l'intégration GitHub déjà autorisée.
+
+
+==================================================
+16. RAPPORT FINAL
+==================================================
+
+À la fin, donner :
+
+1. Home créée : OUI/NON
+2. Route /home : OUI/NON
+3. Connexion → Home : OUI/NON
+4. Gestion des projets : OUI/NON
+5. Journal : OUI/NON
+6. Délais : OUI/NON
+7. Budget : OUI/NON
+8. Dashboard : OUI/NON
+9. Reporting : OUI/NON
+10. Base de données : OUI/NON
+11. Build : réussi/échec
+12. fichiers modifiés
+13. commit GitHub
+14. synchronisation GitHub
+
+
+==================================================
+ARCHITECTURE FINALE
+==================================================
+
+                  🔐 CONNEXION
+                       │
+                       ▼
+                  🏠 HOME
+              PAGE D'ACCUEIL
+                  AXIABAT
+                       │
+       ┌───────────────┼────────────────┐
+       │               │                │
+       ▼               ▼                ▼
+📁 Projets      📓 Journal        ⏱ Délais
+       │               │                │
+       ▼               ▼                ▼
+💰 Budget       📊 Dashboard      📈 Reporting
+                       │
+                       ▼
+                🗄 Base de données
+
+
+IMPORTANT :
+
+Le parcours après connexion doit impérativement être :
+
+CONNEXION → HOME
+
+et non :
+
+CONNEXION → DASHBOARD.
+
+La Home est une page indépendante.
+
+Le Dashboard reste un module indépendant.
+
+La Base de données est une rubrique principale indépendante.
+
+Ne supprimer aucune fonctionnalité existante.
