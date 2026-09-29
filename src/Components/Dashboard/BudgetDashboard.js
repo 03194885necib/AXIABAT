@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase'; // Assure-toi que le chemin est correct
 import styles from './ProjectDashboard.module.css'; // Pour le CSS
+import BackToHome from '../../Components/shared/BackToHome';
 
 function ProjectDashboard() {
     const [projets, setProjets] = useState([]);
@@ -88,6 +89,8 @@ function ProjectDashboard() {
     const rapport = totalRealise > 0 ? (totalDecompte / totalRealise) * 100 : 0;
 
     return (
+        <>
+        <BackToHome />
         <div className={styles.dashboardContainer}>
             <h2 className={styles.dashboardTitle}>Tableau de Bord du Projet</h2>
 
@@ -150,6 +153,7 @@ function ProjectDashboard() {
                 <p className={styles.infoMessage}>Veuillez sélectionner un projet pour afficher le tableau de bord.</p>
             )}
         </div>
+        </>
     );
 }
 

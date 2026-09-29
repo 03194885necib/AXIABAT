@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { useAuth } from "../../context/AuthContext";
 import ProjectSelector from "../shared/ProjectSelector";
+import BackToHome from "../shared/BackToHome";
 
 const C = {
   primary: "#1e3a5f",
@@ -211,23 +212,28 @@ export default function GestionDelais() {
 
   if (!selectedProjet) {
     return (
-      <ProjectSelector
-        moduleTitle="Gestion des Délais"
-        moduleIcon="⏱️"
-        moduleDesc="Sélectionnez le projet pour suivre ses délais et arrêts de travaux"
-        onSelect={(projet) => { handleSelectProjet(projet); }}
-      />
+      <div>
+        <BackToHome />
+        <ProjectSelector
+          moduleTitle="Gestion des Délais"
+          moduleIcon="⏱️"
+          moduleDesc="Sélectionnez le projet pour suivre ses délais et arrêts de travaux"
+          onSelect={(projet) => { handleSelectProjet(projet); }}
+        />
+      </div>
     );
   }
 
   return (
-    <div style={s.page}>
-      {/* Toast */}
-      {toast && (
-        <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
-          {toast.msg}
-        </div>
-      )}
+    <>
+      <BackToHome />
+      <div style={s.page}>
+        {/* Toast */}
+        {toast && (
+          <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
+            {toast.msg}
+          </div>
+        )}
 
       {/* En-tête */}
       <div style={s.header}>
@@ -601,7 +607,8 @@ export default function GestionDelais() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

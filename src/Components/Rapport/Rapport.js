@@ -2,6 +2,7 @@ import React from 'react';
 import './rapport.css'; 
 import { FaDownload, FaFileUpload } from 'react-icons/fa'; // Import icons from react-icons
 import { useNavigate } from 'react-router-dom';
+import BackToHome from '../shared/BackToHome';
 
 const CardsPage = () => {
      const navigate=useNavigate()
@@ -22,7 +23,9 @@ const CardsPage = () => {
   };
 
   return (
-    <div className="cards-page-container">
+    <>
+      <BackToHome />
+      <div className="cards-page-container">
       <h1 className="page-title">Gestion des Fichiers</h1> {/* Page title */}
 
       <div className="cards-grid">
@@ -50,7 +53,8 @@ const CardsPage = () => {
           <button className="card-button">Importer Fichier</button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

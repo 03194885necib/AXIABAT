@@ -6,6 +6,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 import ProjectSelector from "../shared/ProjectSelector";
+import BackToHome from "../shared/BackToHome";
 
 const C = {
   primary: "#1e3a5f", accent: "#f59e0b", success: "#10b981",
@@ -185,22 +186,27 @@ export default function JournalChantier() {
 
   if (!projetSelectionne) {
     return (
-      <ProjectSelector
-        moduleTitle="Journal de Chantier"
-        moduleIcon="📓"
-        moduleDesc="Sélectionnez le projet pour accéder à son journal de chantier"
-        onSelect={(projet) => { handleSelectProjet(projet); }}
-      />
+      <div>
+        <BackToHome />
+        <ProjectSelector
+          moduleTitle="Journal de Chantier"
+          moduleIcon="📓"
+          moduleDesc="Sélectionnez le projet pour accéder à son journal de chantier"
+          onSelect={(projet) => { handleSelectProjet(projet); }}
+        />
+      </div>
     );
   }
 
   return (
-    <div style={s.page}>
-      {toast && (
-        <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
-          {toast.msg}
-        </div>
-      )}
+    <>
+      <BackToHome />
+      <div style={s.page}>
+        {toast && (
+          <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
+            {toast.msg}
+          </div>
+        )}
 
       {/* En-tête */}
       <div style={s.header}>
@@ -563,7 +569,8 @@ export default function JournalChantier() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
