@@ -42,10 +42,12 @@ const CategoryDropdown = ({ project, selectedArticles, setSelectedArticles }) =>
     
     setArticles(prev => ({
       ...prev,
-      [categoryId]: articlesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+       [categoryId]: articlesSnapshot.docs
+         .map(doc => ({
+           id: doc.id,
+           ...doc.data()
+         }))
+         .filter(article => article.actif !== false)
     }));
     
     setLoadingArticles(false);

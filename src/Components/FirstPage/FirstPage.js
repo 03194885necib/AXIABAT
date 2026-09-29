@@ -11,6 +11,7 @@ import {
   FiFileText,
   FiFolder,
   FiGrid,
+  FiHome,
   FiLogOut,
   FiMenu,
   FiPlus,
@@ -18,13 +19,14 @@ import {
   FiUser,
   FiX,
 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth, ROLE_LABELS, ROLES } from "../../context/AuthContext";
 import { db } from "../../firebase";
 import AxiaBatLogo from "./logo2.png";
 import "./FirstPage.css";
 
 const navigationItems = [
+  { key: "home", label: "Home", icon: FiHome, route: "/home" },
   { key: "dashboard", label: "Tableau de bord", icon: FiGrid, route: "/FirstPage" },
   { key: "projects", label: "Projets", icon: FiFolder, route: "/Project3" },
   { key: "journal", label: "Journal de chantier", icon: FiBookOpen, route: "/JournalChantier" },
@@ -36,7 +38,7 @@ const navigationItems = [
   { key: "database", label: "Base de données", icon: FiDatabase, route: "/BaseDeDonnees" },
 ];
 
-const conductorNavigation = new Set(["dashboard", "journal", "delais", "budget"]);
+const conductorNavigation = new Set(["home", "dashboard", "journal", "delais", "budget"]);
 
 const firstValue = (project, keys) => {
   for (const key of keys) {
@@ -100,6 +102,7 @@ const countReports = (project) => {
 
 function FirstPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, userProfile, logout } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -223,12 +226,12 @@ function FirstPage() {
                 {item.divider && <div className="sidebar-divider" />}
                 <button
                   type="button"
-                  className={`sidebar-link ${item.key === "dashboard" ? "active" : ""}`}
+                  className={`sidebar-link ${item.route === location.pathname ? "active" : ""}`}
                   onClick={() => navigateTo(item.route)}
                 >
                   <Icon />
                   <span>{item.label}</span>
-                  {item.key === "dashboard" && <span className="active-dot" />}
+                  {item.route === location.pathname && <span className="active-dot" />}
                 </button>
               </React.Fragment>
             );

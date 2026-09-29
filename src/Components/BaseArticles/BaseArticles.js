@@ -17,11 +17,43 @@ const C = {
   border: "#e2e8f0", bg: "#f8fafc", white: "#ffffff",
 };
 
-const UNITES = ["m", "m²", "m³", "ml", "kg", "T", "U", "Fft", "Ens", "L", "h"];
+const UNITES = ["U", "ml", "m2", "m3", "Ens", "T", "kg", "forfait", "autre"];
+const EMPTY_ARTICLE_FORM = {
+  numero: "",
+  designation: "",
+  unite: "U",
+  prixUnitaire: "",
+  categorie: "",
+  description: "",
+  actif: true,
+};
+
+const normalizeArticleValue = (value) =>
+  String(value || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("fr-FR");
+
+const getNextArticleCode = (articles) => {
+  const usedCodes = new Set(
+    articles.map((article) => String(article.numero || "").trim()).filter(Boolean)
+  );
+  let index = 1;
+  let code = "";
+  do {
+    code = `ART-${String(index).padStart(3, "0")}`;
+    index += 1;
+  } while (usedCodes.has(code));
+  return code;
+};
 
 export default function BaseArticles() {
   const navigate = useNavigate();
   const { userProfile, currentUser } = useAuth();
+  const canManageArticles = userProfile?.role === "admin";
 
   const [vue, setVue] = useState("liste"); // "liste" | "nouveau" | "modifier"
   const [categories, setCategories] = useState([]);
@@ -33,10 +65,7 @@ export default function BaseArticles() {
   const [filterCat, setFilterCat] = useState("all");
   const [articleEdit, setArticleEdit] = useState(null);
 
-  const [formArticle, setFormArticle] = useState({
-    numero: "", designation: "", unite: "m", prixUnitaire: "",
-    categorie: "", description: "",
-  });
+  const [formArticle, setFormArticle] = useState(EMPTY_ARTICLE_FORM);
 
   const [formCategorie, setFormCategorie] = useState({ designation: "" });
   const [showCatForm, setShowCatForm] = useState(false);
@@ -81,9 +110,13 @@ export default function BaseArticles() {
 
   // Filtrer articles
   const articlesFiltres = articles.filter((a) => {
+    const categoryName = categories.find((c) => c.id === a.categorie)?.designation || "";
+    const searchValue = search.toLowerCase();
     const matchSearch =
-      a.designation?.toLowerCase().includes(search.toLowerCase()) ||
-      a.numero?.toLowerCase().includes(search.toLowerCase());
+      a.designation?.toLowerCase().includes(searchValue) ||
+      a.numero?.toLowerCase().includes(searchValue) ||
+      a.unite?.toLowerCase().includes(searchValue) ||
+      categoryName.toLowerCase().includes(searchValue);
     const matchCat = filterCat === "all" || a.categorie === filterCat;
     return matchSearch && matchCat;
   });
@@ -91,17 +124,58 @@ export default function BaseArticles() {
   // Sauvegarder article
   const handleSaveArticle = async (e) => {
     e.preventDefault();
+    if (!canManageArticles) {
+      showToast("Seuls les administrateurs peuvent gérer les articles.", "error");
+      return;
+    }
     if (!formArticle.designation.trim()) {
       showToast("La désignation est requise.", "error"); return;
+    }
+    if (!formArticle.unite.trim()) {
+      showToast("L'unité est obligatoire.", "error"); return;
     }
     if (!formArticle.categorie) {
       showToast("Veuillez sélectionner une catégorie.", "error"); return;
     }
+    const numero = formArticle.numero.trim();
+    if (!numero) {
+      showToast("Le code article est obligatoire.", "error"); return;
+    }
+    const prix = formArticle.prixUnitaire === "" || formArticle.prixUnitaire === null
+      ? null
+      : Number(formArticle.prixUnitaire);
+    if (prix !== null && (!Number.isFinite(prix) || prix < 0)) {
+      showToast("Le prix unitaire doit être numérique ou vide.", "error");
+      return;
+    }
+    const duplicateArticle = articles.find((article) =>
+      article.id !== articleEdit?.id &&
+      normalizeArticleValue(article.designation) === normalizeArticleValue(formArticle.designation) &&
+      normalizeArticleValue(article.unite) === normalizeArticleValue(formArticle.unite) &&
+      article.categorie === formArticle.categorie
+    );
+    if (duplicateArticle) {
+      showToast("Cet article existe déjà dans la base de données.", "error");
+      return;
+    }
+    const duplicateCode = articles.find((article) =>
+      article.id !== articleEdit?.id &&
+      String(article.numero || "").trim().toLowerCase() === numero.toLowerCase()
+    );
+    if (duplicateCode) {
+      showToast("Ce code article existe déjà dans la base de données.", "error");
+      return;
+    }
     setSaving(true);
     try {
       const data = {
-        ...formArticle,
-        prixUnitaire: parseFloat(formArticle.prixUnitaire || 0),
+        numero,
+        designation: formArticle.designation.trim(),
+        unite: formArticle.unite.trim(),
+        prixUnitaire: prix,
+        categorie: formArticle.categorie,
+        description: formArticle.description.trim(),
+        actif: formArticle.actif !== false,
         updatedAt: serverTimestamp(),
       };
       if (articleEdit) {
@@ -118,7 +192,7 @@ export default function BaseArticles() {
       await fetchData();
       setVue("liste");
       setArticleEdit(null);
-      setFormArticle({ numero: "", designation: "", unite: "m", prixUnitaire: "", categorie: "", description: "" });
+      setFormArticle({ ...EMPTY_ARTICLE_FORM });
     } catch (err) {
       console.error(err);
       showToast("Erreur lors de l'enregistrement.", "error");
@@ -127,15 +201,27 @@ export default function BaseArticles() {
     }
   };
 
-  // Supprimer article
-  const handleDeleteArticle = async (id, nom) => {
-    if (!window.confirm(`Supprimer l'article "${nom}" ?`)) return;
+  // Désactiver ou réactiver un article sans supprimer son historique
+  const handleToggleArticle = async (article) => {
+    if (!canManageArticles) {
+      showToast("Seuls les administrateurs peuvent gérer les articles.", "error");
+      return;
+    }
+    const nextActif = article.actif === false;
+    const action = nextActif ? "réactiver" : "désactiver";
+    if (!window.confirm(`${nextActif ? "Réactiver" : "Désactiver"} l'article "${article.designation}" ?`)) return;
     try {
-      await deleteDoc(doc(db, "articles", id));
-      setArticles((prev) => prev.filter((a) => a.id !== id));
-      showToast("Article supprimé.");
+      await updateDoc(doc(db, "articles", article.id), {
+        actif: nextActif,
+        updatedAt: serverTimestamp(),
+      });
+      setArticles((prev) => prev.map((item) =>
+        item.id === article.id ? { ...item, actif: nextActif } : item
+      ));
+      showToast(`Article ${action === "réactiver" ? "réactivé" : "désactivé"} avec succès.`);
     } catch (err) {
-      showToast("Erreur lors de la suppression.", "error");
+      console.error(err);
+      showToast("Erreur lors de la mise à jour du statut.", "error");
     }
   };
 
@@ -143,12 +229,13 @@ export default function BaseArticles() {
   const handleEditArticle = (article) => {
     setArticleEdit(article);
     setFormArticle({
-      numero: article.numero || "",
+      numero: article.numero || getNextArticleCode(articles.filter((item) => item.id !== article.id)),
       designation: article.designation || "",
-      unite: article.unite || "m",
-      prixUnitaire: article.prixUnitaire || "",
+      unite: article.unite || "U",
+      prixUnitaire: article.prixUnitaire ?? "",
       categorie: article.categorie || "",
       description: article.description || "",
+      actif: article.actif !== false,
     });
     setVue("modifier");
   };
@@ -156,6 +243,10 @@ export default function BaseArticles() {
   // Sauvegarder catégorie
   const handleSaveCategorie = async (e) => {
     e.preventDefault();
+    if (!canManageArticles) {
+      showToast("Seuls les administrateurs peuvent gérer les catégories.", "error");
+      return;
+    }
     if (!formCategorie.designation.trim()) {
       showToast("La désignation est requise.", "error"); return;
     }
@@ -201,6 +292,10 @@ export default function BaseArticles() {
 
   // Supprimer catégorie
   const handleDeleteCategorie = async (id, nom) => {
+    if (!canManageArticles) {
+      showToast("Seuls les administrateurs peuvent gérer les catégories.", "error");
+      return;
+    }
     const articlesLies = articles.filter((a) => a.categorie === id);
     if (articlesLies.length > 0) {
       showToast(`Impossible — ${articlesLies.length} article(s) liés à cette catégorie.`, "error");
@@ -242,7 +337,7 @@ export default function BaseArticles() {
         </div>
         <div style={s.headerActions}>
           <button style={s.btnSecondary} onClick={() => navigate("/FirstPage")}>← Accueil</button>
-          {userProfile?.role === "admin" && (
+          {canManageArticles && (
             <button
               style={s.btnSecondary}
               onClick={handleImportCatalog}
@@ -252,16 +347,19 @@ export default function BaseArticles() {
               {importingCatalog ? "Import en cours..." : "⬆ Importer le catalogue BTP"}
             </button>
           )}
-          {vue === "liste" && activeTab === "articles" && (
+          {canManageArticles && vue === "liste" && activeTab === "articles" && (
             <button style={s.btnPrimary} onClick={() => {
               setArticleEdit(null);
-              setFormArticle({ numero: "", designation: "", unite: "m", prixUnitaire: "", categorie: "", description: "" });
+              setFormArticle({
+                ...EMPTY_ARTICLE_FORM,
+                numero: getNextArticleCode(articles),
+              });
               setVue("nouveau");
             }}>
-              + Nouvel article
+              + Ajouter un article
             </button>
           )}
-          {vue === "liste" && activeTab === "categories" && (
+          {canManageArticles && vue === "liste" && activeTab === "categories" && (
             <button style={s.btnPrimary} onClick={() => setShowCatForm(true)}>
               + Nouvelle catégorie
             </button>
@@ -411,7 +509,8 @@ export default function BaseArticles() {
                         <th style={s.th}>Catégorie</th>
                         <th style={s.th}>Unité</th>
                         <th style={s.th}>Prix Unitaire (DA)</th>
-                        <th style={s.th}>Actions</th>
+                        <th style={s.th}>Statut</th>
+                        {canManageArticles && <th style={s.th}>Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -431,25 +530,37 @@ export default function BaseArticles() {
                           </td>
                           <td style={s.td}>{article.unite}</td>
                           <td style={{ ...s.td, fontWeight: 700, color: C.primary }}>
-                            {article.prixUnitaire
+                            {article.prixUnitaire !== null &&
+                            article.prixUnitaire !== undefined &&
+                            article.prixUnitaire !== ""
                               ? `${Number(article.prixUnitaire).toLocaleString("fr-DZ")} DA`
                               : <span style={{ color: C.muted }}>Non défini</span>
                             }
                           </td>
                           <td style={s.td}>
-                            <div style={s.actions}>
-                              <button
-                                style={{ ...s.actionBtn, color: C.primary }}
-                                onClick={() => handleEditArticle(article)}
-                                title="Modifier"
-                              >✏️</button>
-                              <button
-                                style={{ ...s.actionBtn, color: C.danger }}
-                                onClick={() => handleDeleteArticle(article.id, article.designation)}
-                                title="Supprimer"
-                              >🗑</button>
-                            </div>
+                            <span style={{
+                              ...s.statusBadge,
+                              ...(article.actif === false ? s.statusInactive : s.statusActive),
+                            }}>
+                              {article.actif === false ? "Inactif" : "Actif"}
+                            </span>
                           </td>
+                          {canManageArticles && (
+                            <td style={s.td}>
+                              <div style={s.actions}>
+                                <button
+                                  style={{ ...s.actionBtn, color: C.primary }}
+                                  onClick={() => handleEditArticle(article)}
+                                  title="Modifier"
+                                >✏️</button>
+                                <button
+                                  style={{ ...s.actionBtn, color: article.actif === false ? C.success : C.danger }}
+                                  onClick={() => handleToggleArticle(article)}
+                                  title={article.actif === false ? "Réactiver" : "Désactiver"}
+                                >{article.actif === false ? "▶" : "⏸"}</button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -515,11 +626,13 @@ export default function BaseArticles() {
                           >
                             Voir les articles →
                           </button>
-                          <button
-                            style={{ ...s.actionBtn, color: C.danger }}
-                            onClick={() => handleDeleteCategorie(cat.id, cat.designation)}
-                            title="Supprimer"
-                          >🗑</button>
+                          {canManageArticles && (
+                            <button
+                              style={{ ...s.actionBtn, color: C.danger }}
+                              onClick={() => handleDeleteCategorie(cat.id, cat.designation)}
+                              title="Supprimer"
+                            >🗑</button>
+                          )}
                         </div>
                       </div>
                     );
@@ -536,17 +649,17 @@ export default function BaseArticles() {
         <div style={s.content}>
           <div style={s.card}>
             <h2 style={s.sectionTitle}>
-              {vue === "nouveau" ? "➕ Nouvel article" : `✏️ Modifier — ${articleEdit?.designation}`}
+              {vue === "nouveau" ? "➕ Ajouter un article" : `✏️ Modifier — ${articleEdit?.designation}`}
             </h2>
 
             <form onSubmit={handleSaveArticle} noValidate>
               <div style={s.grid2}>
                 <div style={s.field}>
-                  <label style={s.label}>N° Article</label>
+                  <label style={s.label}>Code article *</label>
                   <input
                     type="text"
                     style={s.input}
-                    placeholder="ex: 01.02.03"
+                    placeholder="ex: ART-161"
                     value={formArticle.numero}
                     onChange={(e) => setFormArticle({ ...formArticle, numero: e.target.value })}
                   />
@@ -563,6 +676,9 @@ export default function BaseArticles() {
                       <option key={c.id} value={c.id}>{c.designation}</option>
                     ))}
                   </select>
+                  <div style={s.fieldHint}>
+                    Les catégories se gèrent depuis l’onglet « Catégories ».
+                  </div>
                 </div>
               </div>
 
@@ -591,15 +707,17 @@ export default function BaseArticles() {
               <div style={s.grid2}>
                 <div style={s.field}>
                   <label style={s.label}>Unité *</label>
-                  <select
+                  <input
+                    list="unites-btp"
+                    type="text"
                     style={s.input}
+                    placeholder="Ex: m3 ou unité personnalisée"
                     value={formArticle.unite}
                     onChange={(e) => setFormArticle({ ...formArticle, unite: e.target.value })}
-                  >
-                    {UNITES.map((u) => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
+                  />
+                  <datalist id="unites-btp">
+                    {UNITES.map((u) => <option key={u} value={u} />)}
+                  </datalist>
                 </div>
                 <div style={s.field}>
                   <label style={s.label}>Prix unitaire (DA)</label>
@@ -616,7 +734,9 @@ export default function BaseArticles() {
               </div>
 
               {/* Aperçu prix */}
-              {formArticle.prixUnitaire && (
+              {formArticle.prixUnitaire !== "" &&
+                formArticle.prixUnitaire !== null &&
+                formArticle.prixUnitaire !== undefined && (
                 <div style={s.prixApercu}>
                   💰 Prix unitaire :{" "}
                   <strong style={{ color: C.primary }}>
@@ -624,6 +744,15 @@ export default function BaseArticles() {
                   </strong>
                 </div>
               )}
+
+              <label style={s.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={formArticle.actif !== false}
+                  onChange={(e) => setFormArticle({ ...formArticle, actif: e.target.checked })}
+                />
+                <span>Actif — proposer cet article dans les projets</span>
+              </label>
 
               <div style={s.formFooter}>
                 <button
@@ -676,6 +805,9 @@ const s = {
   tr: { borderBottom: "1px solid #e2e8f0" },
   td: { padding: "12px 14px", fontSize: 14, color: "#1e293b", verticalAlign: "middle" },
   numBadge: { background: "#eff6ff", color: "#1e40af", padding: "3px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700 },
+  statusBadge: { padding: "3px 9px", borderRadius: 20, fontSize: 12, fontWeight: 700 },
+  statusActive: { background: "#dcfce7", color: "#166534" },
+  statusInactive: { background: "#fee2e2", color: "#991b1b" },
   articleDesc: { fontSize: 12, color: "#64748b", marginTop: 3 },
   catBadge: { background: "#f1f5f9", color: "#475569", padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600 },
   actions: { display: "flex", gap: 8 },
@@ -693,10 +825,12 @@ const s = {
   catActionBtn: { fontSize: 13, color: "#1e3a5f", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   field: { marginBottom: 16 },
+  fieldHint: { color: "#64748b", fontSize: 11, marginTop: 5 },
   label: { display: "block", fontSize: 13, fontWeight: 600, color: "#1e293b", marginBottom: 6 },
   input: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", background: "#fff" },
   textarea: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", background: "#fff", resize: "vertical", fontFamily: "inherit" },
   prixApercu: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", fontSize: 14, color: "#1e293b", marginBottom: 16 },
+  checkboxLabel: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#1e293b", margin: "4px 0 20px", cursor: "pointer" },
   formFooter: { display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 },
   emptyState: { textAlign: "center", padding: 60 },
   emptyIcon: { fontSize: 48, display: "block", marginBottom: 16 },

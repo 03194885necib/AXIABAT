@@ -33,7 +33,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/FirstPage");
+      navigate("/home");
     } catch {
       setError("Email ou mot de passe incorrect.");
     } finally {
