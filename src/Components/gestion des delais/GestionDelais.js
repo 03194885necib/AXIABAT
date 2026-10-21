@@ -225,15 +225,14 @@ export default function GestionDelais() {
   }
 
   return (
-    <>
+    <div style={s.page}>
       <BackToHome />
-      <div style={s.page}>
-        {/* Toast */}
-        {toast && (
-          <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
-            {toast.msg}
-          </div>
-        )}
+      {/* Toast */}
+      {toast && (
+        <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
+          {toast.msg}
+        </div>
+      )}
 
       {/* En-tête */}
       <div style={s.header}>
@@ -607,8 +606,7 @@ export default function GestionDelais() {
           </div>
         </div>
       )}
-      </div>
-    </>
+    </div>
   );
 }
 

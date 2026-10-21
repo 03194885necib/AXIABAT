@@ -1,0 +1,147 @@
+CORRECTION NAVIGATION AXIABAT – RETOUR À L'ACCUEIL
+
+J'ai constaté deux problèmes après la dernière modification.
+
+PROBLÈME 1 – GESTION DES DÉLAIS
+Dans le module "Gestion des délais", le bouton :
+
+← Retour à l'accueil
+
+s'affiche actuellement EN BAS de la page.
+
+Je veux exactement le même comportement que dans les autres modules :
+le bouton doit être affiché EN HAUT du module, immédiatement après l'entrée dans la page.
+
+Ordre souhaité :
+
+┌──────────────────────────────────────────────┐
+│ ← Retour à l'accueil                         │
+├──────────────────────────────────────────────┤
+│ Gestion des délais                           │
+│                                              │
+│ Contenu du module                            │
+└──────────────────────────────────────────────┘
+
+Le bouton doit être placé avant le contenu principal du module, et non après le contenu.
+
+PROBLÈME 2 – TABLEAU DE BORD
+Le module "Tableau de bord" n'affiche actuellement PAS le bouton :
+
+← Retour à l'accueil
+
+Le Tableau de bord correspond à la route existante :
+
+/FirstPage
+
+Ajouter le même composant "Retour à l'accueil" EN HAUT de la page /FirstPage.
+
+ORDRE SOUHAITÉ POUR LE TABLEAU DE BORD :
+
+← Retour à l'accueil
+
+Tableau de bord AXIABAT
+
+[contenu actuel du Dashboard]
+
+IMPORTANT :
+- Ne pas supprimer le contenu actuel du Dashboard.
+- Ne pas modifier les graphiques.
+- Ne pas modifier les KPI.
+- Ne pas modifier Firebase.
+- Ne pas modifier les données.
+- Ne pas changer la route /FirstPage.
+- Ne pas transformer le Dashboard en Home.
+- La page Home reste /home.
+
+COMPOSANT COMMUN
+
+Utiliser le composant partagé déjà créé pour :
+
+← Retour à l'accueil
+
+S'il existe déjà un composant tel que :
+BackToHome
+ou
+RetourAccueil
+ou équivalent,
+
+réutiliser celui-ci.
+
+NE PAS créer un deuxième composant faisant la même chose.
+
+GESTION DES DÉLAIS
+
+Inspecter la structure actuelle du module "Gestion des délais".
+
+Identifier pourquoi le bouton est actuellement rendu après le contenu.
+
+Déplacer son rendu dans le conteneur principal, avant le titre et le contenu du module.
+
+Il doit être visuellement placé en haut.
+
+TABLEAU DE BORD
+
+Inspecter la page/composant correspondant à :
+
+/FirstPage
+
+Ajouter le composant partagé "Retour à l'accueil" au début du contenu principal.
+
+IMPORTANT RESPONSIVE
+
+Le bouton doit rester en haut sur :
+- ordinateur
+- tablette
+- mobile
+
+Il ne doit pas être positionné avec une position fixe en bas de page.
+
+Éviter notamment :
+position: fixed;
+bottom: ...;
+
+Le bouton doit suivre normalement le flux de la page.
+
+STYLE
+
+Conserver exactement le même style visuel que le bouton "← Retour à l'accueil" déjà présent dans les autres modules.
+
+Ne pas créer un nouveau style différent pour Gestion des délais ou Tableau de bord.
+
+TESTS
+
+Après modification :
+
+1. Ouvrir /home.
+2. Entrer dans "Gestion des délais".
+3. Vérifier que "← Retour à l'accueil" est tout en haut.
+4. Vérifier qu'il est AVANT le contenu du module.
+5. Cliquer dessus et vérifier le retour vers /home.
+
+6. Ouvrir "Tableau de bord".
+7. Vérifier que la route /FirstPage fonctionne toujours.
+8. Vérifier que "← Retour à l'accueil" apparaît tout en haut.
+9. Cliquer dessus et vérifier le retour vers /home.
+
+10. Vérifier également les autres modules afin de ne pas casser leur bouton existant.
+
+BUILD
+
+Exécuter :
+
+npm run build
+
+Le build doit réussir sans nouvelle erreur.
+
+IMPORTANT :
+Ne modifier que ce qui est nécessaire pour corriger ces deux problèmes.
+
+À LA FIN, indique-moi :
+- le fichier du module Gestion des délais modifié ;
+- le fichier du Dashboard /FirstPage modifié ;
+- le composant partagé utilisé ;
+- le résultat de npm run build.
+
+Puis commit et push sur GitHub avec :
+
+"Fix return home position in delays and dashboard"

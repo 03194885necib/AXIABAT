@@ -1,0 +1,151 @@
+CORRECTION CIBLÉE – BOUTON "← Retour à l'accueil" DU TABLEAU DE BORD
+
+Le problème persiste uniquement dans le module :
+
+📊 Tableau de bord
+
+Route actuelle :
+/FirstPage
+
+Le bouton :
+
+← Retour à l'accueil
+
+N'apparaît toujours PAS dans le Tableau de bord.
+
+IMPORTANT :
+Ne modifie PAS les autres modules qui fonctionnent déjà.
+Ne modifie PAS la page /home.
+Ne modifie PAS Firebase.
+Ne modifie PAS les données.
+Ne modifie PAS la logique des KPI, graphiques ou statistiques du Dashboard.
+
+ÉTAPE 1 – INSPECTION
+
+Inspecte le code réel de la route :
+
+/FirstPage
+
+et identifie exactement quel composant React est rendu lorsque l'utilisateur clique sur :
+
+Tableau de bord
+
+depuis /home.
+
+Ne suppose pas le nom du fichier.
+Vérifie App.js, les routes React Router et les imports afin d'identifier le composant réellement utilisé.
+
+ÉTAPE 2 – AJOUT DU BOUTON
+
+Dans le composant réellement utilisé pour /FirstPage, ajoute le composant partagé existant :
+
+← Retour à l'accueil
+
+Le bouton doit être rendu EN PREMIER dans le contenu principal du Dashboard.
+
+Structure souhaitée :
+
+<div ...>
+    <BackToHome />
+    
+    <contenu actuel du Dashboard>
+       ...
+    </contenu actuel>
+</div>
+
+Le nom exact du composant doit être celui qui existe déjà dans le projet.
+
+IMPORTANT :
+Ne crée PAS un deuxième composant BackToHome si celui-ci existe déjà.
+
+ÉTAPE 3 – VÉRIFICATION DU RENDU
+
+Vérifie qu'il n'y a pas dans FirstPage :
+
+- un return différent selon une condition qui empêche le bouton ;
+- un composant Header qui remplace le contenu ;
+- un layout qui masque le bouton ;
+- un overflow ou une hauteur qui le cache ;
+- une redirection automatique ;
+- une condition liée à l'utilisateur ou Firebase qui empêche son affichage.
+
+Le bouton doit être visible dès l'ouverture de /FirstPage.
+
+ÉTAPE 4 – POSITION
+
+Le bouton doit être EN HAUT du Dashboard :
+
+← Retour à l'accueil
+
+Tableau de bord
+
+[KPI]
+
+[Graphiques]
+
+[Contenu existant]
+
+Il ne doit PAS être :
+- en bas ;
+- dans le footer ;
+- positionné fixed en bas ;
+- caché derrière le Header ;
+- ajouté uniquement après le chargement des données.
+
+ÉTAPE 5 – NAVIGATION
+
+Lorsque l'utilisateur clique sur :
+
+← Retour à l'accueil
+
+il doit être redirigé vers :
+
+/home
+
+Utiliser le système React Router déjà présent dans le projet.
+
+Ne pas utiliser :
+window.location.reload()
+
+ÉTAPE 6 – TEST OBLIGATOIRE
+
+Faire un test réel du parcours :
+
+/home
+   ↓
+cliquer "Tableau de bord"
+   ↓
+/FirstPage
+   ↓
+vérifier que "← Retour à l'accueil" est visible EN HAUT
+   ↓
+cliquer sur "← Retour à l'accueil"
+   ↓
+/home
+
+IMPORTANT :
+
+Ne considère PAS la tâche terminée simplement parce que le code compile.
+
+Vérifie réellement que le bouton est rendu dans l'interface du Dashboard.
+
+ÉTAPE 7 – BUILD
+
+Exécuter :
+
+npm run build
+
+Le build doit réussir.
+
+À LA FIN, donne-moi :
+
+1. Le nom exact du composant qui correspond à /FirstPage.
+2. Le fichier modifié.
+3. L'endroit exact où BackToHome a été ajouté.
+4. Confirmation que le bouton est visible en haut de /FirstPage.
+5. Confirmation que le clic retourne vers /home.
+6. Résultat de npm run build.
+
+Puis commit et push sur GitHub avec :
+
+"Fix BackToHome visibility on dashboard"

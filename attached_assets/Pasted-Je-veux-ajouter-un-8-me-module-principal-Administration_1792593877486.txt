@@ -1,0 +1,1017 @@
+Je veux ajouter un 8ème module principal "Administration" à AXIABAT.
+Voici les instructions complètes.
+
+═══════════════════════════════════════════
+CONTEXTE
+═══════════════════════════════════════════
+
+AXIABAT est une application React avec Firebase Authentication et Firestore.
+Le module Administration est réservé aux utilisateurs ayant le rôle "administrateur" 
+dans Firestore (collection "utilisateurs", champ "role" = "administrateur").
+
+La sécurité doit être assurée côté serveur via les Firebase Security Rules,
+pas uniquement côté interface.
+
+═══════════════════════════════════════════
+1. ARCHITECTURE DES RÔLES
+═══════════════════════════════════════════
+
+Les rôles disponibles dans Firestore sont :
+
+- administrateur   → accès à tous les modules + Administration
+- chef_projet      → Projets, Journal, Délais, Budget, Dashboard, Reporting
+- ingenieur        → Projets, Journal, Délais, Dashboard
+- conducteur       → Journal, Délais, Budget
+- lecteur          → Dashboard, Reporting (lecture seule)
+
+Chaque utilisateur est stocké dans Firestore :
+Collection : utilisateurs
+Document ID : uid Firebase Auth
+Champs : nom, email, role, actif (boolean), dateExpiration (timestamp), modules (array), createdAt, createdBy
+
+═══════════════════════════════════════════
+2. FIREBASE SECURITY RULES
+═══════════════════════════════════════════
+
+Mettre à jour firestore.rules avec ces règles :
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.role == 'administrateur';
+    }
+
+    function isActive() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.actif == true;
+    }
+
+    // Utilisateurs : seul l'admin peut lire/écrire la liste complète
+    match /utilisateurs/{uid} {
+      allow read: if request.auth.uid == uid || isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Journal d'administration : lecture et écriture admin uniquement
+    match /admin_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Projets : utilisateurs actifs seulement
+    match /projets/{projetId} {
+      allow read: if isActive();
+      allow write: if isActive() && (
+        get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.role in 
+        ['administrateur', 'chef_projet', 'ingenieur']
+      );
+      match /ArticlesProjet/{articleId} {
+        allow read, write: if isActive();
+      }
+    }
+
+    // Articles et catégories
+    match /articles/{id} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+    match /categories/{id} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+  }
+}
+
+═══════════════════════════════════════════
+3. FICHIERS À CRÉER
+═══════════════════════════════════════════
+
+Créer ces fichiers :
+
+src/pages/admin/Administration.js
+src/pages/admin/Administration.css
+src/pages/admin/components/ListeUtilisateurs.js
+src/pages/admin/components/FormulaireUtilisateur.js
+src/pages/admin/components/GestionRoles.js
+src/pages/admin/components/JournalAdmin.js
+src/services/adminService.js
+
+═══════════════════════════════════════════
+4. adminService.js — SERVICE FIREBASE ADMIN
+═══════════════════════════════════════════
+
+Créer src/services/adminService.js avec ces fonctions :
+
+import { db, firebaseAuth } from '../firebase';
+import {
+  collection, doc, getDocs, getDoc, addDoc,
+  updateDoc, deleteDoc, query, orderBy, serverTimestamp
+} from 'firebase/firestore';
+import { sendPasswordResetEmail } from 'firebase/auth';
+
+const COLLECTION_USERS = 'utilisateurs';
+const COLLECTION_LOGS  = 'admin_logs';
+
+// Lister tous les utilisateurs
+export async function listerUtilisateurs() {
+  const snap = await getDocs(collection(db, COLLECTION_USERS));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// Ajouter un utilisateur dans Firestore (le compte Firebase Auth est créé séparément)
+export async function ajouterUtilisateur(adminUid, data) {
+  const ref = await addDoc(collection(db, COLLECTION_USERS), {
+    nom: data.nom,
+    email: data.email,
+    role: data.role,
+    actif: true,
+    modules: data.modules || [],
+    dateExpiration: data.dateExpiration || null,
+    createdAt: serverTimestamp(),
+    createdBy: adminUid,
+  });
+  await loggerAction(adminUid, 'CREATE_USER', { email: data.email, role: data.role });
+  return ref.id;
+}
+
+// Modifier un utilisateur
+export async function modifierUtilisateur(adminUid, uid, data) {
+  await updateDoc(doc(db, COLLECTION_USERS, uid), {
+    ...data,
+    updatedAt: serverTimestamp(),
+    updatedBy: adminUid,
+  });
+  await loggerAction(adminUid, 'UPDATE_USER', { uid, changes: Object.keys(data) });
+}
+
+// Activer / désactiver un compte
+export async function toggleActif(adminUid, uid, actif) {
+  await updateDoc(doc(db, COLLECTION_USERS, uid), {
+    actif,
+    updatedAt: serverTimestamp(),
+    updatedBy: adminUid,
+  });
+  await loggerAction(adminUid, actif ? 'ACTIVATE_USER' : 'DEACTIVATE_USER', { uid });
+}
+
+// Changer le rôle
+export async function changerRole(adminUid, uid, nouveauRole) {
+  await updateDoc(doc(db, COLLECTION_USERS, uid), {
+    role: nouveauRole,
+    updatedAt: serverTimestamp(),
+    updatedBy: adminUid,
+  });
+  await loggerAction(adminUid, 'CHANGE_ROLE', { uid, nouveauRole });
+}
+
+// Envoyer email de réinitialisation
+export async function reinitialiserMotDePasse(adminUid, email) {
+  await sendPasswordResetEmail(firebaseAuth, email);
+  await loggerAction(adminUid, 'RESET_PASSWORD', { email });
+}
+
+// Supprimer un utilisateur de Firestore
+export async function supprimerUtilisateur(adminUid, uid, email) {
+  await deleteDoc(doc(db, COLLECTION_USERS, uid));
+  await loggerAction(adminUid, 'DELETE_USER', { uid, email });
+}
+
+// Lire le journal d'administration
+export async function lireLogs() {
+  const q = query(collection(db, COLLECTION_LOGS), orderBy('timestamp', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// Enregistrer une action dans le journal
+async function loggerAction(adminUid, action, details) {
+  await addDoc(collection(db, COLLECTION_LOGS), {
+    adminUid,
+    action,
+    details,
+    timestamp: serverTimestamp(),
+    resultat: 'SUCCESS',
+  });
+}
+
+═══════════════════════════════════════════
+5. Administration.js — PAGE PRINCIPALE
+═══════════════════════════════════════════
+
+Créer src/pages/admin/Administration.js :
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import ListeUtilisateurs from './components/ListeUtilisateurs';
+import FormulaireUtilisateur from './components/FormulaireUtilisateur';
+import JournalAdmin from './components/JournalAdmin';
+import './Administration.css';
+
+export default function Administration() {
+  const { utilisateur, role } = useAuth();
+  const navigate = useNavigate();
+  const [onglet, setOnglet] = useState('utilisateurs');
+  const [showFormulaire, setShowFormulaire] = useState(false);
+  const [userAEditer, setUserAEditer] = useState(null);
+
+  // Sécurité côté client (en plus des Security Rules Firestore)
+  useEffect(() => {
+    if (role && role !== 'administrateur') {
+      navigate('/home');
+    }
+  }, [role, navigate]);
+
+  if (role !== 'administrateur') {
+    return (
+      <div className="admin-acces-refuse">
+        <div className="admin-acces-icon">⛔</div>
+        <h2>Accès refusé</h2>
+        <p>Ce module est réservé aux administrateurs AXIABAT.</p>
+        <button onClick={() => navigate('/home')}>Retour à l'accueil</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-container">
+      {/* Header */}
+      <div className="admin-header">
+        <div className="admin-header-left">
+          <h1>⚙️ Administration</h1>
+          <span className="admin-badge">Accès restreint — Administrateur</span>
+        </div>
+        <button className="admin-btn-retour" onClick={() => navigate('/home')}>
+          ← Retour à l'accueil
+        </button>
+      </div>
+
+      {/* Onglets */}
+      <div className="admin-tabs">
+        {[
+          { id: 'utilisateurs', label: '👥 Utilisateurs' },
+          { id: 'roles',        label: '🔑 Rôles & Permissions' },
+          { id: 'journal',      label: '📋 Journal d\'administration' },
+        ].map(t => (
+          <button
+            key={t.id}
+            className={`admin-tab ${onglet === t.id ? 'active' : ''}`}
+            onClick={() => setOnglet(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Contenu */}
+      <div className="admin-content">
+
+        {onglet === 'utilisateurs' && (
+          <div>
+            <div className="admin-toolbar">
+              <h2>Comptes utilisateurs</h2>
+              <button
+                className="admin-btn-primary"
+                onClick={() => { setUserAEditer(null); setShowFormulaire(true); }}
+              >
+                + Ajouter un utilisateur
+              </button>
+            </div>
+            {showFormulaire && (
+              <FormulaireUtilisateur
+                adminUid={utilisateur.uid}
+                userAEditer={userAEditer}
+                onClose={() => { setShowFormulaire(false); setUserAEditer(null); }}
+              />
+            )}
+            <ListeUtilisateurs
+              adminUid={utilisateur.uid}
+              onEditer={(u) => { setUserAEditer(u); setShowFormulaire(true); }}
+            />
+          </div>
+        )}
+
+        {onglet === 'roles' && (
+          <div className="admin-roles-info">
+            <h2>Rôles disponibles dans AXIABAT</h2>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Rôle</th>
+                  <th>Projets</th>
+                  <th>Journal</th>
+                  <th>Délais</th>
+                  <th>Budget</th>
+                  <th>Dashboard</th>
+                  <th>Reporting</th>
+                  <th>Base données</th>
+                  <th>Administration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { role:'Administrateur', p:'✅','j':'✅','d':'✅','b':'✅','db':'✅','r':'✅','bd':'✅','a':'✅' },
+                  { role:'Chef de projet', p:'✅','j':'✅','d':'✅','b':'✅','db':'✅','r':'✅','bd':'❌','a':'❌' },
+                  { role:'Ingénieur',      p:'✅','j':'✅','d':'✅','b':'❌','db':'✅','r':'❌','bd':'❌','a':'❌' },
+                  { role:'Conducteur',     p:'❌','j':'✅','d':'✅','b':'✅','db':'❌','r':'❌','bd':'❌','a':'❌' },
+                  { role:'Lecteur',        p:'❌','j':'❌','d':'❌','b':'❌','db':'✅','r':'✅','bd':'❌','a':'❌' },
+                ].map(row => (
+                  <tr key={row.role}>
+                    <td><strong>{row.role}</strong></td>
+                    <td>{row.p}</td>
+                    <td>{row.j}</td>
+                    <td>{row.d}</td>
+                    <td>{row.b}</td>
+                    <td>{row.db}</td>
+                    <td>{row.r}</td>
+                    <td>{row.bd}</td>
+                    <td>{row.a}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {onglet === 'journal' && (
+          <JournalAdmin adminUid={utilisateur.uid} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+═══════════════════════════════════════════
+6. ListeUtilisateurs.js
+═══════════════════════════════════════════
+
+Créer src/pages/admin/components/ListeUtilisateurs.js :
+
+import React, { useState, useEffect } from 'react';
+import {
+  listerUtilisateurs, toggleActif,
+  reinitialiserMotDePasse, supprimerUtilisateur
+} from '../../../services/adminService';
+
+const ROLES_LABELS = {
+  administrateur: { label: 'Administrateur', color: '#7E57C2' },
+  chef_projet:    { label: 'Chef de projet',  color: '#1565C0' },
+  ingenieur:      { label: 'Ingénieur',        color: '#00897B' },
+  conducteur:     { label: 'Conducteur',       color: '#F57F17' },
+  lecteur:        { label: 'Lecteur',           color: '#546E7A' },
+};
+
+export default function ListeUtilisateurs({ adminUid, onEditer }) {
+  const [utilisateurs, setUtilisateurs] = useState([]);
+  const [chargement, setChargement]     = useState(true);
+  const [message, setMessage]           = useState('');
+
+  const charger = async () => {
+    setChargement(true);
+    try {
+      const data = await listerUtilisateurs();
+      setUtilisateurs(data);
+    } catch(e) {
+      setMessage('Erreur chargement : ' + e.message);
+    } finally {
+      setChargement(false);
+    }
+  };
+
+  useEffect(() => { charger(); }, []);
+
+  const handleToggle = async (uid, actif) => {
+    try {
+      await toggleActif(adminUid, uid, !actif);
+      setMessage(!actif ? '✅ Compte activé' : '⚠️ Compte désactivé');
+      charger();
+    } catch(e) { setMessage('Erreur : ' + e.message); }
+  };
+
+  const handleReset = async (email) => {
+    if (!window.confirm(`Envoyer un email de réinitialisation à ${email} ?`)) return;
+    try {
+      await reinitialiserMotDePasse(adminUid, email);
+      setMessage('✅ Email de réinitialisation envoyé à ' + email);
+    } catch(e) { setMessage('Erreur : ' + e.message); }
+  };
+
+  const handleSupprimer = async (uid, email) => {
+    if (!window.confirm(`Supprimer définitivement le compte ${email} ?`)) return;
+    try {
+      await supprimerUtilisateur(adminUid, uid, email);
+      setMessage('✅ Compte supprimé');
+      charger();
+    } catch(e) { setMessage('Erreur : ' + e.message); }
+  };
+
+  if (chargement) return <div className="admin-loading">Chargement...</div>;
+
+  return (
+    <div>
+      {message && (
+        <div className="admin-message" onClick={() => setMessage('')}>
+          {message} ✕
+        </div>
+      )}
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th>Expiration</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {utilisateurs.map(u => {
+            const roleInfo = ROLES_LABELS[u.role] || { label: u.role, color: '#999' };
+            return (
+              <tr key={u.id}>
+                <td>{u.nom || '—'}</td>
+                <td>{u.email}</td>
+                <td>
+                  <span className="admin-role-badge"
+                    style={{ background: roleInfo.color + '22', color: roleInfo.color,
+                      padding:'2px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>
+                    {roleInfo.label}
+                  </span>
+                </td>
+                <td>
+                  <span style={{ color: u.actif ? '#43A047' : '#E53935', fontWeight:600, fontSize:12 }}>
+                    {u.actif ? '● Actif' : '● Suspendu'}
+                  </span>
+                </td>
+                <td style={{ fontSize:12, color:'#78909C' }}>
+                  {u.dateExpiration
+                    ? new Date(u.dateExpiration.seconds * 1000).toLocaleDateString('fr-FR')
+                    : '—'}
+                </td>
+                <td>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    <button className="admin-btn-sm admin-btn-edit"
+                      onClick={() => onEditer(u)}>✏️ Modifier</button>
+                    <button className="admin-btn-sm"
+                      style={{ background: u.actif ? '#FFF3E0' : '#E8F5E9',
+                        color: u.actif ? '#E65100' : '#2E7D32' }}
+                      onClick={() => handleToggle(u.id, u.actif)}>
+                      {u.actif ? '⏸ Suspendre' : '▶ Activer'}
+                    </button>
+                    <button className="admin-btn-sm admin-btn-reset"
+                      onClick={() => handleReset(u.email)}>🔑 Reset MDP</button>
+                    <button className="admin-btn-sm admin-btn-delete"
+                      onClick={() => handleSupprimer(u.id, u.email)}>🗑 Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+═══════════════════════════════════════════
+7. FormulaireUtilisateur.js
+═══════════════════════════════════════════
+
+Créer src/pages/admin/components/FormulaireUtilisateur.js :
+
+import React, { useState } from 'react';
+import { ajouterUtilisateur, modifierUtilisateur, changerRole } from '../../../services/adminService';
+
+const ROLES = ['administrateur','chef_projet','ingenieur','conducteur','lecteur'];
+const MODULES_DISPO = ['projets','journal','delais','budget','dashboard','reporting','base_donnees'];
+
+export default function FormulaireUtilisateur({ adminUid, userAEditer, onClose }) {
+  const [form, setForm] = useState({
+    nom:            userAEditer?.nom    || '',
+    email:          userAEditer?.email  || '',
+    role:           userAEditer?.role   || 'conducteur',
+    modules:        userAEditer?.modules || MODULES_DISPO,
+    dateExpiration: '',
+  });
+  const [erreur,      setErreur]      = useState('');
+  const [chargement,  setChargement]  = useState(false);
+  const [succes,      setSucces]      = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(p => ({ ...p, [name]: value }));
+  };
+
+  const toggleModule = (mod) => {
+    setForm(p => ({
+      ...p,
+      modules: p.modules.includes(mod)
+        ? p.modules.filter(m => m !== mod)
+        : [...p.modules, mod],
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!form.nom.trim() || !form.email.trim()) {
+      setErreur('Nom et email sont obligatoires.'); return;
+    }
+    setChargement(true); setErreur('');
+    try {
+      if (userAEditer) {
+        await modifierUtilisateur(adminUid, userAEditer.id, {
+          nom: form.nom, modules: form.modules,
+          dateExpiration: form.dateExpiration
+            ? new Date(form.dateExpiration) : null,
+        });
+        if (form.role !== userAEditer.role) {
+          await changerRole(adminUid, userAEditer.id, form.role);
+        }
+        setSucces('✅ Utilisateur modifié avec succès !');
+      } else {
+        await ajouterUtilisateur(adminUid, form);
+        setSucces('✅ Utilisateur ajouté. Il doit maintenant créer son compte Firebase Auth avec cet email.');
+      }
+      setTimeout(onClose, 2000);
+    } catch(e) {
+      setErreur('Erreur : ' + e.message);
+    } finally { setChargement(false); }
+  };
+
+  return (
+    <div className="admin-modal-overlay">
+      <div className="admin-modal">
+        <div className="admin-modal-header">
+          <h3>{userAEditer ? '✏️ Modifier l\'utilisateur' : '➕ Ajouter un utilisateur'}</h3>
+          <button onClick={onClose} className="admin-modal-close">×</button>
+        </div>
+
+        <div className="admin-modal-body">
+          {erreur  && <div className="admin-error">{erreur}</div>}
+          {succes  && <div className="admin-succes">{succes}</div>}
+
+          <div className="admin-field">
+            <label>Nom complet *</label>
+            <input name="nom" value={form.nom}
+              onChange={handleChange} placeholder="Ex: Mohamed Amara" />
+          </div>
+          <div className="admin-field">
+            <label>Email *</label>
+            <input name="email" type="email" value={form.email}
+              onChange={handleChange} placeholder="utilisateur@axiabat.com"
+              disabled={!!userAEditer} />
+            {userAEditer && <small>L'email ne peut pas être modifié.</small>}
+          </div>
+          <div className="admin-field">
+            <label>Rôle *</label>
+            <select name="role" value={form.role} onChange={handleChange}>
+              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="admin-field">
+            <label>Date d'expiration du compte (optionnel)</label>
+            <input name="dateExpiration" type="date"
+              value={form.dateExpiration} onChange={handleChange} />
+          </div>
+          <div className="admin-field">
+            <label>Modules accessibles</label>
+            <div className="admin-modules-grid">
+              {MODULES_DISPO.map(mod => (
+                <label key={mod} className="admin-module-check">
+                  <input type="checkbox"
+                    checked={form.modules.includes(mod)}
+                    onChange={() => toggleModule(mod)} />
+                  {mod}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-modal-footer">
+          <button onClick={onClose} className="admin-btn-annuler">Annuler</button>
+          <button onClick={handleSave} disabled={chargement} className="admin-btn-primary">
+            {chargement ? 'Enregistrement...' : (userAEditer ? 'Enregistrer' : 'Ajouter')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+═══════════════════════════════════════════
+8. JournalAdmin.js
+═══════════════════════════════════════════
+
+Créer src/pages/admin/components/JournalAdmin.js :
+
+import React, { useState, useEffect } from 'react';
+import { lireLogs } from '../../../services/adminService';
+
+const ACTION_LABELS = {
+  CREATE_USER:     { label: 'Création compte',    color: '#43A047' },
+  UPDATE_USER:     { label: 'Modification',        color: '#1565C0' },
+  CHANGE_ROLE:     { label: 'Changement de rôle', color: '#7E57C2' },
+  ACTIVATE_USER:   { label: 'Activation',          color: '#00897B' },
+  DEACTIVATE_USER: { label: 'Suspension',          color: '#F57F17' },
+  DELETE_USER:     { label: 'Suppression',         color: '#E53935' },
+  RESET_PASSWORD:  { label: 'Reset mot de passe', color: '#546E7A' },
+};
+
+export default function JournalAdmin() {
+  const [logs,       setLogs]       = useState([]);
+  const [chargement, setChargement] = useState(true);
+
+  useEffect(() => {
+    lireLogs()
+      .then(setLogs)
+      .catch(console.error)
+      .finally(() => setChargement(false));
+  }, []);
+
+  if (chargement) return <div className="admin-loading">Chargement du journal...</div>;
+
+  return (
+    <div>
+      <h2>Journal d'administration ({logs.length} entrées)</h2>
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Action</th>
+            <th>Détails</th>
+            <th>Résultat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {logs.length === 0 && (
+            <tr><td colSpan={4} style={{textAlign:'center',color:'#90A4AE'}}>
+              Aucune action enregistrée
+            </td></tr>
+          )}
+          {logs.map(log => {
+            const info = ACTION_LABELS[log.action] || { label: log.action, color: '#999' };
+            const date = log.timestamp?.toDate?.()
+              ? log.timestamp.toDate().toLocaleString('fr-FR')
+              : '—';
+            return (
+              <tr key={log.id}>
+                <td style={{ fontSize:12, color:'#546E7A' }}>{date}</td>
+                <td>
+                  <span style={{ background: info.color + '22', color: info.color,
+                    padding:'2px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>
+                    {info.label}
+                  </span>
+                </td>
+                <td style={{ fontSize:12 }}>
+                  {JSON.stringify(log.details || {})}
+                </td>
+                <td style={{ color: log.resultat === 'SUCCESS' ? '#43A047' : '#E53935',
+                  fontSize:12, fontWeight:600 }}>
+                  {log.resultat}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+═══════════════════════════════════════════
+9. Administration.css
+═══════════════════════════════════════════
+
+Créer src/pages/admin/Administration.css :
+
+.admin-container {
+  min-height: 100vh;
+  background: #F0F4F8;
+  font-family: 'Segoe UI', sans-serif;
+}
+.admin-header {
+  background: #0D1B4B;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.admin-header h1 { color: #fff; font-size: 20px; margin: 0; }
+.admin-badge {
+  background: rgba(229,57,53,0.2);
+  color: #EF9A9A;
+  border: 1px solid rgba(229,57,53,0.3);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 12px;
+  margin-left: 12px;
+}
+.admin-btn-retour {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  background: #fff;
+  border-bottom: 1px solid #E8EAF0;
+  padding: 0 32px;
+}
+.admin-tab {
+  padding: 14px 20px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #78909C;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.admin-tab.active {
+  color: #1565C0;
+  border-bottom-color: #1565C0;
+}
+.admin-content {
+  padding: 28px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.admin-toolbar h2 { font-size: 18px; color: #1A237E; }
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  font-size: 13px;
+}
+.admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  background: #F7F9FC;
+  color: #546E7A;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  border-bottom: 1px solid #E8EAF0;
+}
+.admin-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F0F2F5;
+  color: #263238;
+}
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-btn-primary {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #1565C0, #1E88E5);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-btn-sm {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #E8EAF0;
+  font-size: 11px;
+  cursor: pointer;
+  background: #F7F9FC;
+  color: #546E7A;
+}
+.admin-btn-edit   { background: #E3F2FD; color: #1565C0; }
+.admin-btn-reset  { background: #EDE7F6; color: #6A1B9A; }
+.admin-btn-delete { background: #FFF5F5; color: #C62828; }
+.admin-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.admin-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #E8EAF0;
+}
+.admin-modal-header h3 { font-size: 16px; color: #1A237E; }
+.admin-modal-close {
+  background: none; border: none;
+  font-size: 22px; cursor: pointer; color: #90A4AE;
+}
+.admin-modal-body  { padding: 20px 24px; }
+.admin-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #E8EAF0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.admin-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.admin-field label {
+  font-size: 12px; font-weight: 700;
+  color: #546E7A; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.admin-field input,
+.admin-field select {
+  padding: 10px 13px;
+  border-radius: 8px;
+  border: 1.5px solid #CFD8DC;
+  font-size: 13px;
+  outline: none;
+}
+.admin-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.admin-module-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.admin-btn-annuler {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1.5px solid #CFD8DC;
+  background: transparent;
+  color: #546E7A;
+  font-size: 13px;
+  cursor: pointer;
+}
+.admin-error  {
+  background: #FFF5F5; border: 1px solid #EF9A9A;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; color: #C62828; margin-bottom: 12px;
+}
+.admin-succes {
+  background: #F1F8E9; border: 1px solid #A5D6A7;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; color: #2E7D32; margin-bottom: 12px;
+}
+.admin-message {
+  background: #E3F2FD; border: 1px solid #BBDEFB;
+  border-radius: 8px; padding: 10px 16px;
+  font-size: 13px; color: #1565C0;
+  margin-bottom: 16px; cursor: pointer;
+}
+.admin-loading {
+  padding: 40px; text-align: center; color: #90A4AE;
+}
+.admin-acces-refuse {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100vh; font-family: 'Segoe UI', sans-serif;
+  background: #F0F4F8;
+}
+.admin-acces-icon { font-size: 64px; margin-bottom: 16px; }
+.admin-roles-info h2 { font-size: 18px; color: #1A237E; margin-bottom: 16px; }
+
+═══════════════════════════════════════════
+10. MISE À JOUR App.js
+═══════════════════════════════════════════
+
+Dans src/App.js, ajouter l'import et la route :
+
+import Administration from './pages/admin/Administration';
+
+Ajouter dans les routes protégées :
+
+<Route path="/admin" element={
+  <ProtectedRoute roles={['administrateur']}>
+    <Administration />
+  </ProtectedRoute>
+} />
+
+═══════════════════════════════════════════
+11. MISE À JOUR DE LA HOME
+═══════════════════════════════════════════
+
+Dans la page Home, ajouter la 8ème carte Administration :
+
+Icône : ⚙️
+Titre : Administration
+Description : "Gérer les comptes, rôles, droits d'accès et journal des opérations."
+Bouton : "Accéder"
+Route : /admin
+
+N'afficher cette carte QUE si role === 'administrateur' :
+
+{role === 'administrateur' && (
+  <div className="home-card" onClick={() => navigate('/admin')}>
+    <span>⚙️</span>
+    <h3>Administration</h3>
+    <p>Gérer les comptes, rôles, droits d'accès et journal des opérations.</p>
+    <button>Accéder</button>
+  </div>
+)}
+
+═══════════════════════════════════════════
+12. MISE À JOUR NAVBAR
+═══════════════════════════════════════════
+
+Dans la navbar/header, ajouter le lien Administration
+visible uniquement pour role === 'administrateur' :
+
+{role === 'administrateur' && (
+  <NavLink to="/admin">⚙️ Administration</NavLink>
+)}
+
+═══════════════════════════════════════════
+13. DÉPLOYER LES SECURITY RULES
+═══════════════════════════════════════════
+
+Après avoir créé firestore.rules, exécuter :
+
+firebase deploy --only firestore:rules
+
+═══════════════════════════════════════════
+14. TESTS À EFFECTUER
+═══════════════════════════════════════════
+
+TEST 1 — Connexion admin
+Se connecter avec un compte administrateur.
+Résultat attendu : carte Administration visible sur Home.
+
+TEST 2 — Accès refusé
+Se connecter avec un compte conducteur.
+Taper /admin dans l'URL.
+Résultat attendu : redirection vers /home.
+
+TEST 3 — Ajouter un utilisateur
+Aller dans Administration → Ajouter.
+Remplir nom, email, rôle.
+Résultat attendu : document créé dans Firestore + log dans admin_logs.
+
+TEST 4 — Suspendre un compte
+Cliquer Suspendre sur un utilisateur.
+Résultat attendu : actif = false dans Firestore.
+Vérifier que cet utilisateur ne peut plus accéder à l'application.
+
+TEST 5 — Reset mot de passe
+Cliquer Reset MDP.
+Résultat attendu : email envoyé via Firebase Auth.
+
+TEST 6 — Journal
+Vérifier que toutes les actions apparaissent dans Journal d'administration.
+
+═══════════════════════════════════════════
+15. BUILD ET COMMIT
+═══════════════════════════════════════════
+
+Après validation de tous les tests :
+
+npm run build
+
+git add .
+git commit -m "Add Administration module with user management, roles, and audit log"
+git push origin main
+
+═══════════════════════════════════════════
+RAPPORT FINAL ATTENDU
+═══════════════════════════════════════════
+
+1. Module Administration créé : OUI/NON
+2. Route /admin protégée par rôle : OUI/NON
+3. Firebase Security Rules déployées : OUI/NON
+4. Liste utilisateurs fonctionnelle : OUI/NON
+5. Ajout utilisateur fonctionnel : OUI/NON
+6. Modification utilisateur fonctionnelle : OUI/NON
+7. Activation/Suspension fonctionnelle : OUI/NON
+8. Reset mot de passe fonctionnel : OUI/NON
+9. Journal d'administration fonctionnel : OUI/NON
+10. Carte Administration sur Home (admin seulement) : OUI/NON
+11. Build réussi : OUI/NON
+12. Commit GitHub : OUI/NON
