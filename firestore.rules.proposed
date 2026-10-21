@@ -1,0 +1,170 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function hasActiveAccount() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.get('actif', true) == true;
+    }
+
+    function isAdmin() {
+      return hasActiveAccount()
+        && get(userPath(request.auth.uid)).data.get('role', '') == 'admin';
+    }
+
+    function validRole(role) {
+      return role in ['admin', 'chef_projet', 'conducteur', 'viewer'];
+    }
+
+    function logRoleChangeMatchesAccount() {
+      let detail = request.resource.data.get('détail', {});
+      let targetUid = detail.get('targetUid', '');
+      let targetPath = userPath(targetUid);
+
+      return detail.keys().hasAll(['targetUid', 'previousRole', 'newRole'])
+        && detail.keys().hasOnly(['targetUid', 'previousRole', 'newRole'])
+        && targetUid is string
+        && targetUid != request.auth.uid
+        && validRole(detail.get('previousRole', ''))
+        && validRole(detail.get('newRole', ''))
+        && exists(targetPath)
+        && get(targetPath).data.get('role', '') == detail.previousRole
+        && existsAfter(targetPath)
+        && getAfter(targetPath).data.get('role', '') == detail.newRole;
+    }
+
+    function logStatusChangeMatchesAccount(expectedStatus) {
+      let detail = request.resource.data.get('détail', {});
+      let targetUid = detail.get('targetUid', '');
+      let targetPath = userPath(targetUid);
+
+      return detail.keys().hasAll(['targetUid', 'actif'])
+        && detail.keys().hasOnly(['targetUid', 'actif'])
+        && targetUid is string
+        && targetUid != request.auth.uid
+        && detail.actif is bool
+        && detail.actif == expectedStatus
+        && exists(targetPath)
+        && get(targetPath).data.get('actif', true) != detail.actif
+        && existsAfter(targetPath)
+        && getAfter(targetPath).data.get('actif', false) == detail.actif;
+    }
+
+    function validActivityLog() {
+      return request.resource.data.keys().hasAll(['uid', 'action', 'date', 'détail'])
+        && request.resource.data.keys().hasOnly(['uid', 'action', 'date', 'détail'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.date is timestamp
+        && request.resource.data.get('détail', {}) is map
+        && (
+          (
+            request.resource.data.action == 'ROLE_CHANGED'
+            && logRoleChangeMatchesAccount()
+          )
+          || (
+            request.resource.data.action == 'ACCOUNT_ACTIVATED'
+            && logStatusChangeMatchesAccount(true)
+          )
+          || (
+            request.resource.data.action == 'ACCOUNT_DEACTIVATED'
+            && logStatusChangeMatchesAccount(false)
+          )
+        );
+    }
+
+    // Le profil personnel reste lisible pour permettre à l'application de
+    // détecter un compte désactivé et de fermer sa session.
+    match /users/{uid} {
+      allow get: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // L'inscription publique ne peut créer qu'un profil viewer actif.
+      // La création des autres comptes est réservée aux administrateurs.
+      allow create: if (
+          isAdmin()
+          && uid != request.auth.uid
+          && validRole(request.resource.data.get('role', ''))
+          && request.resource.data.get('actif', true) is bool
+        ) || (
+          signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.get('role', '') == 'viewer'
+          && request.resource.data.get('actif', false) == true
+        );
+
+      // Un admin gère les autres comptes. Personne ne peut changer son propre
+      // rôle ou son propre statut; un utilisateur actif peut seulement modifier
+      // son nom affiché, comme le fait déjà le profil de l'application.
+      allow update: if (
+          isAdmin()
+          && uid != request.auth.uid
+          && validRole(request.resource.data.get('role', ''))
+          && request.resource.data.get('actif', resource.data.get('actif', true)) is bool
+        ) || (
+          hasActiveAccount()
+          && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName', 'updatedAt'])
+        );
+
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
+    // Les journaux sont consultables uniquement par les admins. Une entrée
+    // doit accompagner, dans le même batch, le changement de compte déclaré.
+    match /logs_activite/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin() && validActivityLog();
+      allow update, delete: if false;
+    }
+
+    // Collections métier utilisées par les modules actuels et leurs variantes
+    // historiques actives. Elles restent accessibles aux comptes actifs,
+    // indépendamment du rôle; une matrice de droits métier pourra être ajoutée
+    // après validation des droits actuels de l'application.
+    match /{businessCollection}/{documentId} {
+      allow read, write: if hasActiveAccount()
+        && businessCollection in [
+          'projects',
+          'articles',
+          'categories',
+          'projectArticles',
+          'articlesProjet',
+          'articlesProjets',
+          'journauxDeChantier',
+          'deadlines',
+          'décomptes',
+          'ArticlesDecompte'
+        ];
+    }
+
+    match /projets/{projectId} {
+      allow read, write: if hasActiveAccount();
+
+      match /{subcollection}/{nestedDocument=**} {
+        allow read, write: if hasActiveAccount()
+          && subcollection in [
+            'ArticlesProjet',
+            'articles',
+            'journalDeChantier',
+            'notesCalculDelais',
+            'decompteTableauxComparatifs',
+            'tableauxDeBord'
+          ];
+      }
+    }
+
+    match /décomptes/{decompteId}/ArticlesDecompte/{articleId} {
+      allow read, write: if hasActiveAccount();
+    }
+  }
+}

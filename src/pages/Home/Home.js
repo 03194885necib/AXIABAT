@@ -10,6 +10,7 @@ import {
   FiGrid,
   FiLogOut,
   FiMenu,
+  FiSettings,
   FiUser,
   FiX,
 } from "react-icons/fi";
@@ -26,6 +27,7 @@ const navigationItems = [
   { label: "Tableau de bord", icon: FiGrid, route: "/FirstPage" },
   { label: "Reporting", icon: FiFileText, route: "/Rapport" },
   { label: "Base de données", icon: FiDatabase, route: "/BaseDeDonnees" },
+  { label: "Administration", icon: FiSettings, route: "/UserManagement", adminOnly: true },
 ];
 
 const modules = [
@@ -79,6 +81,14 @@ const modules = [
     route: "/BaseDeDonnees",
     tone: "slate",
   },
+  {
+    icon: FiSettings,
+    title: "Administration",
+    description: "Gérer les comptes, les rôles et le journal d'activité.",
+    route: "/UserManagement",
+    tone: "navy",
+    adminOnly: true,
+  },
 ];
 
 export default function Home() {
@@ -94,6 +104,12 @@ export default function Home() {
     "Utilisateur";
   const role = userProfile?.role || ROLES.VIEWER;
   const roleLabel = ROLE_LABELS[role] || "Utilisateur";
+  const visibleNavigationItems = navigationItems.filter(
+    (item) => !item.adminOnly || role === ROLES.ADMIN
+  );
+  const visibleModules = modules.filter(
+    (module) => !module.adminOnly || role === ROLES.ADMIN
+  );
   const initials = userName
     .split(/\s+/)
     .map((part) => part[0])
@@ -133,7 +149,7 @@ export default function Home() {
               <FiX />
             </button>
           </div>
-          {navigationItems.map((item) => {
+          {visibleNavigationItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.route;
             return (
@@ -200,7 +216,7 @@ export default function Home() {
         </section>
 
         <section className="home-module-grid" aria-label="Modules AXIABAT">
-          {modules.map((module) => {
+          {visibleModules.map((module) => {
             const Icon = module.icon;
             return (
               <article className="home-module-card" key={module.route}>

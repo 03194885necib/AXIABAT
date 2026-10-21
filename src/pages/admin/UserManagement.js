@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUsers } from "../../hooks/useUsers";
-import { ROLES, ROLE_LABELS } from "../../context/AuthContext";
+import { ROLES, ROLE_LABELS, useAuth } from "../../context/AuthContext";
+import BackToHome from "../../Components/shared/BackToHome";
 
 const C = {
   primary: "#1e3a5f",
@@ -23,7 +24,21 @@ const ROLE_COLORS = {
 };
 
 export default function UserManagement() {
-  const { users, loading, error, createUser, updateUserRole, toggleUserStatus, deleteUser } = useUsers();
+  const { currentUser } = useAuth();
+  const {
+    users,
+    loading,
+    error,
+    activityLogs,
+    activityLogsLoading,
+    activityLogsError,
+    fetchActivityLogs,
+    createUser,
+    updateUserRole,
+    toggleUserStatus,
+    deleteUser,
+  } = useUsers();
+  const [activeTab, setActiveTab] = useState("accounts");
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -59,20 +74,38 @@ export default function UserManagement() {
   const handleRoleChange = async (uid, newRole) => {
     const result = await updateUserRole(uid, newRole);
     if (result.success) showToast("Rôle mis à jour.");
-    else showToast("Erreur lors de la mise à jour.", "error");
+    else showToast(result.error || "Erreur lors de la mise à jour.", "error");
   };
 
   const handleToggle = async (uid, currentStatus) => {
     const result = await toggleUserStatus(uid, currentStatus);
     if (result.success) showToast(currentStatus ? "Compte désactivé." : "Compte activé.");
-    else showToast("Erreur.", "error");
+    else showToast(result.error || "Erreur lors du changement d'état.", "error");
   };
 
   const handleDelete = async (uid, name) => {
     if (!window.confirm(`Supprimer l'utilisateur "${name}" ?`)) return;
     const result = await deleteUser(uid);
     if (result.success) showToast("Utilisateur supprimé.");
-    else showToast("Erreur lors de la suppression.", "error");
+    else showToast(result.error || "Erreur lors de la suppression.", "error");
+  };
+
+  const formatDate = (value) => {
+    const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+    return date && !Number.isNaN(date.getTime())
+      ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(date)
+      : "—";
+  };
+
+  const describeAction = (action) => ({
+    ROLE_CHANGED: "Rôle modifié",
+    ACCOUNT_ACTIVATED: "Compte activé",
+    ACCOUNT_DEACTIVATED: "Compte désactivé",
+  }[action] || action || "Action");
+
+  const loadActivityLogs = () => {
+    setActiveTab("activity");
+    fetchActivityLogs();
   };
 
   const filtered = users.filter((u) => {
@@ -86,12 +119,13 @@ export default function UserManagement() {
   const stats = [
     { label: "Total", value: users.length, color: C.primary },
     { label: "Admins", value: users.filter((u) => u.role === "admin").length, color: "#7c3aed" },
-    { label: "Actifs", value: users.filter((u) => u.actif).length, color: C.success },
-    { label: "Inactifs", value: users.filter((u) => !u.actif).length, color: C.danger },
+    { label: "Actifs", value: users.filter((u) => u.actif !== false).length, color: C.success },
+    { label: "Inactifs", value: users.filter((u) => u.actif === false).length, color: C.danger },
   ];
 
   return (
     <div style={s.page}>
+      <BackToHome />
       {toast && (
         <div style={{ ...s.toast, background: toast.type === "error" ? C.danger : C.success }}>
           {toast.msg}
@@ -100,169 +134,256 @@ export default function UserManagement() {
 
       <div style={s.header}>
         <div>
-          <h1 style={s.pageTitle}>Gestion des utilisateurs</h1>
-          <p style={s.pageSubtitle}>Gérez les accès et permissions de la plateforme AXIABAT</p>
+          <h1 style={s.pageTitle}>Administration</h1>
+          <p style={s.pageSubtitle}>Comptes, rôles et journal d'activité de la plateforme AXIABAT</p>
         </div>
-        <button style={s.btnPrimary} onClick={() => setShowForm(true)}>
-          + Nouvel utilisateur
+        {activeTab === "accounts" && (
+          <button style={s.btnPrimary} onClick={() => setShowForm(true)}>
+            + Nouvel utilisateur
+          </button>
+        )}
+      </div>
+
+      <div style={s.tabs} role="tablist" aria-label="Administration">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "accounts"}
+          style={{ ...s.tab, ...(activeTab === "accounts" ? s.activeTab : {}) }}
+          onClick={() => setActiveTab("accounts")}
+        >
+          Comptes
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "activity"}
+          style={{ ...s.tab, ...(activeTab === "activity" ? s.activeTab : {}) }}
+          onClick={loadActivityLogs}
+        >
+          Journal d’activité
         </button>
       </div>
 
-      <div style={s.statsRow}>
-        {stats.map((stat) => (
-          <div key={stat.label} style={s.statCard}>
-            <div style={{ ...s.statValue, color: stat.color }}>{stat.value}</div>
-            <div style={s.statLabel}>{stat.label}</div>
+      {activeTab === "accounts" ? (
+        <>
+          <div style={s.statsRow}>
+            {stats.map((stat) => (
+              <div key={stat.label} style={s.statCard}>
+                <div style={{ ...s.statValue, color: stat.color }}>{stat.value}</div>
+                <div style={s.statLabel}>{stat.label}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div style={s.filters}>
-        <input
-          type="text"
-          style={s.searchInput}
-          placeholder="Rechercher un utilisateur..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select style={s.select} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-          <option value="all">Tous les rôles</option>
-          {Object.entries(ROLE_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-      </div>
-
-      {showForm && (
-        <div style={s.modalOverlay}>
-          <div style={s.modal}>
-            <div style={s.modalHeader}>
-              <h2 style={s.modalTitle}>Nouvel utilisateur</h2>
-              <button style={s.closeBtn} onClick={() => setShowForm(false)}>✕</button>
-            </div>
-            {formError && <div style={s.alertErr}>{formError}</div>}
-            <form onSubmit={handleCreate} noValidate>
-              <div style={s.formRow}>
-                <div style={s.field}>
-                  <label style={s.label}>Nom complet *</label>
-                  <input style={s.input} type="text" placeholder="Prénom NOM"
-                    value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
-                </div>
-                <div style={s.field}>
-                  <label style={s.label}>Poste / Fonction</label>
-                  <input style={s.input} type="text" placeholder="Chef de projet..."
-                    value={form.poste} onChange={(e) => setForm({ ...form, poste: e.target.value })} />
-                </div>
-              </div>
-              <div style={s.field}>
-                <label style={s.label}>Adresse e-mail *</label>
-                <input style={s.input} type="email" placeholder="email@entreprise.dz"
-                  value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              </div>
-              <div style={s.formRow}>
-                <div style={s.field}>
-                  <label style={s.label}>Mot de passe *</label>
-                  <input style={s.input} type="password" placeholder="6 caractères minimum"
-                    value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-                </div>
-                <div style={s.field}>
-                  <label style={s.label}>Rôle *</label>
-                  <select style={s.input} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-                    {Object.entries(ROLE_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div style={s.modalFooter}>
-                <button type="button" style={s.btnSecondary} onClick={() => setShowForm(false)}>Annuler</button>
-                <button type="submit" style={s.btnPrimary} disabled={formLoading}>
-                  {formLoading ? "Création..." : "Créer l'utilisateur"}
-                </button>
-              </div>
-            </form>
+          <div style={s.filters}>
+            <input
+              type="text"
+              style={s.searchInput}
+              placeholder="Rechercher un utilisateur..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <select style={s.select} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+              <option value="all">Tous les rôles</option>
+              {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
 
-      {loading ? (
-        <div style={s.center}>Chargement...</div>
-      ) : error ? (
-        <div style={s.alertErr}>{error}</div>
-      ) : (
-        <div style={s.tableWrapper}>
-          <table style={s.table}>
-            <thead>
-              <tr style={s.thead}>
-                <th style={s.th}>Utilisateur</th>
-                <th style={s.th}>Poste</th>
-                <th style={s.th}>Rôle</th>
-                <th style={s.th}>Statut</th>
-                <th style={s.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ ...s.td, textAlign: "center", color: C.muted }}>
-                    Aucun utilisateur trouvé
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((user) => (
-                  <tr key={user.id} style={s.tr}>
-                    <td style={s.td}>
-                      <div style={s.userCell}>
-                        <div style={s.avatar}>
-                          {(user.displayName || user.email || "?")[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={s.userName}>{user.displayName || "—"}</div>
-                          <div style={s.userEmail}>{user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={s.td}><span style={s.poste}>{user.poste || "—"}</span></td>
-                    <td style={s.td}>
-                      <select
-                        style={{ ...s.roleBadge, ...ROLE_COLORS[user.role] }}
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      >
+          {showForm && (
+            <div style={s.modalOverlay}>
+              <div style={s.modal}>
+                <div style={s.modalHeader}>
+                  <h2 style={s.modalTitle}>Nouvel utilisateur</h2>
+                  <button style={s.closeBtn} onClick={() => setShowForm(false)}>✕</button>
+                </div>
+                {formError && <div style={s.alertErr}>{formError}</div>}
+                <form onSubmit={handleCreate} noValidate>
+                  <div style={s.formRow}>
+                    <div style={s.field}>
+                      <label style={s.label}>Nom complet *</label>
+                      <input style={s.input} type="text" placeholder="Prénom NOM"
+                        value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
+                    </div>
+                    <div style={s.field}>
+                      <label style={s.label}>Poste / Fonction</label>
+                      <input style={s.input} type="text" placeholder="Chef de projet..."
+                        value={form.poste} onChange={(e) => setForm({ ...form, poste: e.target.value })} />
+                    </div>
+                  </div>
+                  <div style={s.field}>
+                    <label style={s.label}>Adresse e-mail *</label>
+                    <input style={s.input} type="email" placeholder="email@entreprise.dz"
+                      value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  </div>
+                  <div style={s.formRow}>
+                    <div style={s.field}>
+                      <label style={s.label}>Mot de passe *</label>
+                      <input style={s.input} type="password" placeholder="6 caractères minimum"
+                        value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                    </div>
+                    <div style={s.field}>
+                      <label style={s.label}>Rôle *</label>
+                      <select style={s.input} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
                         {Object.entries(ROLE_LABELS).map(([k, v]) => (
                           <option key={k} value={k}>{v}</option>
                         ))}
                       </select>
-                    </td>
-                    <td style={s.td}>
-                      <span style={{ ...s.badge, ...(user.actif ? s.badgeActive : s.badgeInactive) }}>
-                        {user.actif ? "Actif" : "Inactif"}
-                      </span>
-                    </td>
-                    <td style={s.td}>
-                      <div style={s.actions}>
-                        <button
-                          style={{ ...s.actionBtn, color: user.actif ? C.warning : C.success }}
-                          onClick={() => handleToggle(user.id, user.actif)}
-                          title={user.actif ? "Désactiver" : "Activer"}
-                        >
-                          {user.actif ? "⏸" : "▶"}
-                        </button>
-                        <button
-                          style={{ ...s.actionBtn, color: C.danger }}
-                          onClick={() => handleDelete(user.id, user.displayName)}
-                          title="Supprimer"
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </td>
+                    </div>
+                  </div>
+                  <div style={s.modalFooter}>
+                    <button type="button" style={s.btnSecondary} onClick={() => setShowForm(false)}>Annuler</button>
+                    <button type="submit" style={s.btnPrimary} disabled={formLoading}>
+                      {formLoading ? "Création..." : "Créer l'utilisateur"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div style={s.center}>Chargement...</div>
+          ) : error ? (
+            <div style={s.alertErr}>{error}</div>
+          ) : (
+            <div style={s.tableWrapper}>
+              <table style={s.table}>
+                <thead>
+                  <tr style={s.thead}>
+                    <th style={s.th}>Utilisateur</th>
+                    <th style={s.th}>Poste</th>
+                    <th style={s.th}>Rôle</th>
+                    <th style={s.th}>Statut</th>
+                    <th style={s.th}>Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ ...s.td, textAlign: "center", color: C.muted }}>
+                        Aucun utilisateur trouvé
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((user) => {
+                      const isCurrentUser = user.id === currentUser?.uid;
+                      return (
+                        <tr key={user.id} style={s.tr}>
+                          <td style={s.td}>
+                            <div style={s.userCell}>
+                              <div style={s.avatar}>
+                                {(user.displayName || user.email || "?")[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={s.userName}>{user.displayName || "—"}</div>
+                                <div style={s.userEmail}>{user.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={s.td}><span style={s.poste}>{user.poste || "—"}</span></td>
+                          <td style={s.td}>
+                            <select
+                              style={{
+                                ...s.roleBadge,
+                                ...ROLE_COLORS[user.role],
+                                ...(isCurrentUser ? s.disabledControl : {}),
+                              }}
+                              value={user.role}
+                              disabled={isCurrentUser}
+                              title={isCurrentUser ? "Vous ne pouvez pas modifier votre propre rôle." : "Modifier le rôle"}
+                              onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            >
+                              {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={s.td}>
+                            <span style={{ ...s.badge, ...(user.actif === false ? s.badgeInactive : s.badgeActive) }}>
+                              {user.actif === false ? "Inactif" : "Actif"}
+                            </span>
+                          </td>
+                          <td style={s.td}>
+                            <div style={s.actions}>
+                              <button
+                                style={{
+                                  ...s.actionBtn,
+                                  color: user.actif === false ? C.success : C.warning,
+                                  ...(isCurrentUser ? s.disabledControl : {}),
+                                }}
+                                onClick={() => handleToggle(user.id, user.actif !== false)}
+                                disabled={isCurrentUser}
+                                title={isCurrentUser ? "Vous ne pouvez pas modifier l'état de votre propre compte." : user.actif === false ? "Activer" : "Désactiver"}
+                              >
+                                {user.actif === false ? "▶" : "⏸"}
+                              </button>
+                              <button
+                                style={{
+                                  ...s.actionBtn,
+                                  color: C.danger,
+                                  ...(isCurrentUser ? s.disabledControl : {}),
+                                }}
+                                onClick={() => handleDelete(user.id, user.displayName)}
+                                disabled={isCurrentUser}
+                                title={isCurrentUser ? "Vous ne pouvez pas supprimer votre propre compte." : "Supprimer"}
+                              >
+                                🗑
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      ) : (
+        <section aria-label="Journal d'activité">
+          <div style={s.activityHeader}>
+            <p style={s.pageSubtitle}>Historique des changements de rôle et d’état des comptes.</p>
+            <button type="button" style={s.btnSecondary} onClick={fetchActivityLogs} disabled={activityLogsLoading}>
+              {activityLogsLoading ? "Actualisation…" : "Actualiser"}
+            </button>
+          </div>
+          {activityLogsLoading ? (
+            <div style={s.center}>Chargement du journal…</div>
+          ) : activityLogsError ? (
+            <div style={s.alertErr}>{activityLogsError}</div>
+          ) : (
+            <div style={s.tableWrapper}>
+              <table style={s.table}>
+                <thead>
+                  <tr style={s.thead}>
+                    <th style={s.th}>Date</th>
+                    <th style={s.th}>Utilisateur (uid)</th>
+                    <th style={s.th}>Action</th>
+                    <th style={s.th}>Détail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activityLogs.length === 0 ? (
+                    <tr><td colSpan={4} style={{ ...s.td, textAlign: "center", color: C.muted }}>Aucune activité enregistrée</td></tr>
+                  ) : activityLogs.map((entry) => (
+                    <tr key={entry.id} style={s.tr}>
+                      <td style={s.td}>{formatDate(entry.date)}</td>
+                      <td style={s.td}>{entry.uid || "—"}</td>
+                      <td style={s.td}>{describeAction(entry.action)}</td>
+                      <td style={s.td}>
+                        <code style={s.detail}>{JSON.stringify(entry.détail ?? {})}</code>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
@@ -270,6 +391,11 @@ export default function UserManagement() {
 
 const s = {
   page: { padding: 32, fontFamily: "'Inter', -apple-system, sans-serif", maxWidth: 1200, margin: "0 auto" },
+  tabs: { display: "flex", gap: 8, borderBottom: `1px solid ${C.border}`, marginBottom: 24 },
+  tab: { background: "transparent", border: "none", borderBottom: "2px solid transparent", padding: "10px 14px", color: C.muted, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  activeTab: { color: C.primary, borderBottomColor: C.primary },
+  activityHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 },
+  detail: { whiteSpace: "pre-wrap", overflowWrap: "anywhere", color: C.text, fontSize: 12 },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 },
   pageTitle: { fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 4, marginTop: 0 },
   pageSubtitle: { fontSize: 14, color: C.muted, marginTop: 0 },
