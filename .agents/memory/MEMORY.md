@@ -1,3 +1,4 @@
 - [Firestore catalog import](firestore-catalog-import.md) — run catalog writes from an authenticated admin session, not from build-time code.
+- [Firestore rules review](firestore-rules-review.md) — preserve active rules, inventory collections, and get user validation before deploying a complete rules proposal.
 - [GitHub API synchronization](github-api-sync.md) — publish file trees in one low-request batch to stay below the integration rate limit.
 - [React hook warning triage](react-hook-warning-triage.md) — verify package deduplication and a clean workflow restart before changing React dependencies.
