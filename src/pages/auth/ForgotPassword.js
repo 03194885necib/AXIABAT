@@ -77,7 +77,6 @@ export default function ForgotPassword() {
 
         <div style={s.links}>
           <Link to="/login" style={s.link}>← Retour à la connexion</Link>
-          <Link to="/signup" style={s.link}>Créer un compte</Link>
         </div>
       </div>
     </div>
@@ -98,6 +97,6 @@ const s = {
   label: { display: "block", fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 6 },
   input: { width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", background: "#ffffff" },
   btn: { width: "100%", padding: "12px 0", background: C.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 4 },
-  links: { display: "flex", justifyContent: "space-between", marginTop: 24 },
+  links: { display: "flex", justifyContent: "center", marginTop: 24 },
   link: { color: C.primary, fontSize: 13, fontWeight: 600, textDecoration: "none" },
 };

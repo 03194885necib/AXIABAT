@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 // Auth pages (new)
 import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/SignUp";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Unauthorized from "./pages/auth/Unauthorized";
 import HomeLanding from "./pages/Home/Home";
@@ -49,7 +48,6 @@ function App() {
       {/* Public routes */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route

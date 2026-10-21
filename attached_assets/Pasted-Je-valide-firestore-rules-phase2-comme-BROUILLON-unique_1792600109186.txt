@@ -1,0 +1,71 @@
+Je valide firestore.rules.phase2 comme BROUILLON uniquement. Ne déploie rien, ne modifie pas 
+firebase.json, ne touche à aucune règle active, et ne fais aucune écriture sur la base de production.
+
+DÉCISION : l'inscription est fermée. Seuls les administrateurs créent les comptes.
+
+Effectue les points suivants dans cet ordre.
+
+1. AUDIT EN LECTURE SEULE DE LA COLLECTION users
+   - Nombre total de profils ; nombre sans champ "actif" ; nombre contenant un champ "password" 
+     ou similaire (ne m'affiche JAMAIS les valeurs, uniquement le nombre et les UID) ; 
+     répartition par rôle et rôles inconnus.
+   - Si tu n'as pas accès aux données de production depuis cet environnement, dis-le clairement 
+     et donne-moi la procédure exacte dans la console Firebase. N'invente aucun résultat.
+
+2. MIGRATION (À PRÉPARER, NE PAS EXÉCUTER)
+   - Script qui ajoute actif: true aux profils sans ce champ (y compris l'administrateur 
+     principal) et supprime les champs "password" s'il en existe.
+   - Mode simulation (dry-run) par défaut. Je te dirai explicitement quand l'exécuter.
+
+3. FERMETURE DE L'INSCRIPTION
+   - Retire la route /signup de App.js et tout lien "Créer un compte" des écrans de connexion. 
+     Conserve /login, /forgot-password et /unauthorized.
+   - Vérifie qu'aucun fichier n'importe src/pages/SignUp.js et src/pages/auth/SignUp.js, puis 
+     supprime l'ancien src/pages/SignUp.js. Pour src/pages/auth/SignUp.js, montre-moi la liste 
+     des références avant de le supprimer.
+   - Sur la page de connexion, affiche : "L'accès à AXIABAT se fait sur invitation. 
+     Contactez votre administrateur."
+
+4. CRÉATION DE COMPTES PAR L'ADMIN (À PRÉPARER, MONTRE-MOI AVANT D'APPLIQUER)
+   - Dans /UserManagement, ajoute un bouton "Créer un compte" visible uniquement pour le rôle admin, 
+     avec : nom affiché, e-mail, rôle (admin, chef_projet, conducteur, viewer).
+   - IMPORTANT : ne pas utiliser createUserWithEmailAndPassword sur l'instance Firebase principale, 
+     car cela déconnecterait l'administrateur. Utilise une SECONDE instance Firebase 
+     (initializeApp avec la même config et un nom distinct, par exemple "creationComptes", 
+     avec getAuth sur cette instance). Après création, déconnecte uniquement cette seconde instance 
+     (signOut) et supprime-la (deleteApp).
+   - Mot de passe : génère un mot de passe aléatoire fort, jamais affiché ni stocké ni journalisé. 
+     Après création, envoie à l'utilisateur un e-mail de définition de mot de passe 
+     (sendPasswordResetEmail) et indique à l'admin que l'e-mail a été envoyé.
+   - Écris ensuite, avec l'instance principale (connectée en admin), un writeBatch contenant :
+       a) users/{newUid} avec : displayName, email, role, actif: true, createdAt, createdBy 
+          (uid de l'admin). AUCUN champ password.
+       b) un document logs_activite avec action "ACCOUNT_CREATED" et le détail 
+          { targetUid, role }.
+   - Gère les erreurs : e-mail déjà utilisé, e-mail invalide, échec d'écriture du profil après 
+     création du compte Auth (dans ce cas, affiche un message clair et indique l'UID à régulariser).
+
+5. RÈGLES : crée une copie firestore.rules.phase2b (ne modifie pas firestore.rules.phase2)
+   - users : supprime la branche de création du profil personnel. La création n'est autorisée 
+     qu'à un admin actif, pour un autre UID, avec un rôle valide, actif booléen, et sans champ 
+     "password" (request.resource.data.keys().hasAny(['password']) doit être faux). 
+     Ajoute la même interdiction du champ "password" pour les mises à jour.
+   - logs_activite : ajoute l'action "ACCOUNT_CREATED" à validActivityLog, avec détail 
+     { targetUid, role } exactement, targetUid différent de l'admin, !exists(users/targetUid), 
+     existsAfter(users/targetUid) et getAfter(...).role == detail.role.
+   - Conserve le reste de la phase 2 (données métier : lecture pour compte avec actif: true, 
+     écriture pour admin, chef_projet et conducteur).
+   - Montre-moi un diff entre phase2 et phase2b.
+
+6. STORAGE
+   - Liste en lecture seule les chemins Firebase Storage utilisés par l'application et les règles 
+     qu'il faudrait pour aligner leur protection sur celle de Firestore. Ne déploie rien.
+
+7. RAPPORT FINAL
+   - Tableau : point / fait ou non / résultat / risque restant.
+   - Distingue ce que tu as vérifié de ce que tu supposes. N'annonce pas "testé" si tu n'as pas 
+     exécuté le test.
+   - Liste ce qui reste à faire manuellement par moi dans la console Firebase.
+
+Contraintes : aucun déploiement, aucun commit de fichier de règles sans mon accord, aucune 
+écriture en production. Si un point est bloqué, dis-le plutôt que de le contourner.

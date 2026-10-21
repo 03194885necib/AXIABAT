@@ -121,8 +121,7 @@ export default function Login() {
           </form>
 
           <p style={s.footer}>
-            Pas encore de compte ?{" "}
-            <Link to="/signup" style={s.link}>Créer un compte</Link>
+            L'accès à AXIABAT se fait sur invitation. Contactez votre administrateur.
           </p>
         </div>
       </div>
