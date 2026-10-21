@@ -1,3 +1,7 @@
+// PROPOSITION NON DEPLOYEE.
+// Règles actuelles fournies : allow read, write: if true.
+// Le comportement public est conservé pour toutes les collections sauf
+// users et logs_activite, afin que ces protections ne soient pas contournées.
 rules_version = '2';
 
 service cloud.firestore {
@@ -87,8 +91,8 @@ service cloud.firestore {
       allow get: if (signedIn() && request.auth.uid == uid) || isAdmin();
       allow list: if isAdmin();
 
-      // L'inscription publique ne peut créer qu'un profil viewer actif.
-      // La création des autres comptes est réservée aux administrateurs.
+      // L'inscription conserve la création d'un profil viewer actif lié à
+      // l'UID authentifié. Les autres créations sont réservées aux admins.
       allow create: if (
           isAdmin()
           && uid != request.auth.uid
@@ -127,44 +131,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Collections métier utilisées par les modules actuels et leurs variantes
-    // historiques actives. Elles restent accessibles aux comptes actifs,
-    // indépendamment du rôle; une matrice de droits métier pourra être ajoutée
-    // après validation des droits actuels de l'application.
-    match /{businessCollection}/{documentId} {
-      allow read, write: if hasActiveAccount()
-        && businessCollection in [
-          'projects',
-          'articles',
-          'categories',
-          'projectArticles',
-          'articlesProjet',
-          'articlesProjets',
-          'journauxDeChantier',
-          'deadlines',
-          'décomptes',
-          'ArticlesDecompte'
-        ];
-    }
-
-    match /projets/{projectId} {
-      allow read, write: if hasActiveAccount();
-
-      match /{subcollection}/{nestedDocument=**} {
-        allow read, write: if hasActiveAccount()
-          && subcollection in [
-            'ArticlesProjet',
-            'articles',
-            'journalDeChantier',
-            'notesCalculDelais',
-            'decompteTableauxComparatifs',
-            'tableauxDeBord'
-          ];
-      }
-    }
-
-    match /décomptes/{decompteId}/ArticlesDecompte/{articleId} {
-      allow read, write: if hasActiveAccount();
+    // Reprend l'accès public existant pour toutes les collections métier,
+    // racine et sous-collections. Seuls users et logs_activite sont exclus.
+    match /{collectionName}/{document=**} {
+      allow read, write: if collectionName != 'users'
+        && collectionName != 'logs_activite';
     }
   }
 }
