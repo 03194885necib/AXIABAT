@@ -14,3 +14,9 @@ The user-provided current AXIABAT rules contain a global `allow read, write: if 
 **Why:** The global rule currently grants unauthenticated access to every document, so account-role protections cannot work while it remains.
 
 **How to apply:** Explain that enforcing the requested account protections requires removing that catch-all from the proposed active ruleset; do not deploy this change without explicit approval.
+
+For business-data access, require an explicit `users/{uid}.actif == true`. If preserving approved `users` and `logs_activite` rules whose helper treats a missing `actif` field as true, use a separate strict business-access check rather than changing that helper.
+
+**Why:** “Active account” should not grant legacy profiles with a missing status field access to business data, while preserving approved account and audit-log behavior requires keeping its existing semantics.
+
+**How to apply:** Keep the account/log helper unchanged when required, and gate business reads and writes with an explicit active-status check.
