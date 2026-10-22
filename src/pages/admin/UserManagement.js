@@ -42,9 +42,10 @@ export default function UserManagement() {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
-  const [form, setForm] = useState({ displayName: "", email: "", poste: "", password: "", role: ROLES.VIEWER });
+  const [form, setForm] = useState({ displayName: "", email: "", role: ROLES.VIEWER });
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+  const [createNotice, setCreateNotice] = useState(null);
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = "success") => {
@@ -54,18 +55,37 @@ export default function UserManagement() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.displayName || !form.email || !form.password) {
-      setFormError("Nom, email et mot de passe sont requis.");
+    if (!form.displayName.trim() || !form.email.trim()) {
+      setFormError("Le nom et l’adresse e-mail sont obligatoires.");
       return;
     }
     setFormError("");
     setFormLoading(true);
-    const result = await createUser(form);
-    setFormLoading(false);
+    let result;
+    try {
+      result = await createUser(form);
+    } catch {
+      result = { success: false, error: "Une erreur inattendue est survenue pendant la création." };
+    } finally {
+      setFormLoading(false);
+    }
+
+    if (result.reconciliationRequired) {
+      setShowForm(false);
+      setForm({ displayName: "", email: "", role: ROLES.VIEWER });
+      setCreateNotice({ type: "error", message: result.error });
+      return;
+    }
     if (result.success) {
       setShowForm(false);
-      setForm({ displayName: "", email: "", poste: "", password: "", role: ROLES.VIEWER });
-      showToast("Utilisateur créé avec succès.");
+      setForm({ displayName: "", email: "", role: ROLES.VIEWER });
+      setFormError("");
+      setCreateNotice(result.warning
+        ? { type: "warning", message: result.warning }
+        : null);
+      showToast(result.warning
+        ? "Compte créé."
+        : "Compte créé. Le lien de réinitialisation a été demandé.");
     } else {
       setFormError(result.error || "Erreur lors de la création.");
     }
@@ -101,6 +121,7 @@ export default function UserManagement() {
     ROLE_CHANGED: "Rôle modifié",
     ACCOUNT_ACTIVATED: "Compte activé",
     ACCOUNT_DEACTIVATED: "Compte désactivé",
+    ACCOUNT_CREATED: "Compte créé",
   }[action] || action || "Action");
 
   const loadActivityLogs = () => {
@@ -143,6 +164,17 @@ export default function UserManagement() {
           </button>
         )}
       </div>
+      {createNotice && (
+        <div
+          role="alert"
+          style={{
+            ...(createNotice.type === "warning" ? s.alertWarning : s.alertErr),
+            marginBottom: 20,
+          }}
+        >
+          {createNotice.message}
+        </div>
+      )}
 
       <div style={s.tabs} role="tablist" aria-label="Administration">
         <button
@@ -197,44 +229,38 @@ export default function UserManagement() {
               <div style={s.modal}>
                 <div style={s.modalHeader}>
                   <h2 style={s.modalTitle}>Nouvel utilisateur</h2>
-                  <button style={s.closeBtn} onClick={() => setShowForm(false)}>✕</button>
+                  <button type="button" style={s.closeBtn} onClick={() => setShowForm(false)} disabled={formLoading}>✕</button>
                 </div>
                 {formError && <div style={s.alertErr}>{formError}</div>}
-                <form onSubmit={handleCreate} noValidate>
+                <form onSubmit={handleCreate}>
                   <div style={s.formRow}>
                     <div style={s.field}>
-                      <label style={s.label}>Nom complet *</label>
-                      <input style={s.input} type="text" placeholder="Prénom NOM"
+                      <label style={s.label} htmlFor="new-account-name">Nom complet *</label>
+                      <input id="new-account-name" style={s.input} type="text" placeholder="Prénom NOM"
+                        autoComplete="name" required maxLength={120}
                         value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
                     </div>
                     <div style={s.field}>
-                      <label style={s.label}>Poste / Fonction</label>
-                      <input style={s.input} type="text" placeholder="Chef de projet..."
-                        value={form.poste} onChange={(e) => setForm({ ...form, poste: e.target.value })} />
-                    </div>
-                  </div>
-                  <div style={s.field}>
-                    <label style={s.label}>Adresse e-mail *</label>
-                    <input style={s.input} type="email" placeholder="email@entreprise.dz"
-                      value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                  </div>
-                  <div style={s.formRow}>
-                    <div style={s.field}>
-                      <label style={s.label}>Mot de passe *</label>
-                      <input style={s.input} type="password" placeholder="6 caractères minimum"
-                        value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-                    </div>
-                    <div style={s.field}>
-                      <label style={s.label}>Rôle *</label>
-                      <select style={s.input} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                      <label style={s.label} htmlFor="new-account-role">Rôle *</label>
+                      <select id="new-account-role" style={s.input} value={form.role}
+                        onChange={(e) => setForm({ ...form, role: e.target.value })}>
                         {Object.entries(ROLE_LABELS).map(([k, v]) => (
                           <option key={k} value={k}>{v}</option>
                         ))}
                       </select>
                     </div>
                   </div>
+                  <div style={s.field}>
+                    <label style={s.label} htmlFor="new-account-email">Adresse e-mail *</label>
+                    <input id="new-account-email" style={s.input} type="email" placeholder="email@entreprise.dz"
+                      autoComplete="email" required maxLength={254}
+                      value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  </div>
+                  <p style={s.formHelp}>
+                    Un mot de passe aléatoire sera créé en arrière-plan. L’utilisateur recevra un lien pour en choisir un.
+                  </p>
                   <div style={s.modalFooter}>
-                    <button type="button" style={s.btnSecondary} onClick={() => setShowForm(false)}>Annuler</button>
+                    <button type="button" style={s.btnSecondary} onClick={() => setShowForm(false)} disabled={formLoading}>Annuler</button>
                     <button type="submit" style={s.btnPrimary} disabled={formLoading}>
                       {formLoading ? "Création..." : "Créer l'utilisateur"}
                     </button>
@@ -419,6 +445,8 @@ const s = {
   label: { display: "block", fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 6 },
   input: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", background: C.white },
   alertErr: { background: "#fef2f2", border: "1px solid #fecaca", color: C.danger, borderRadius: 8, padding: "10px 14px", fontSize: 14, marginBottom: 16 },
+  alertWarning: { background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e", borderRadius: 8, padding: "10px 14px", fontSize: 14, marginBottom: 16 },
+  formHelp: { margin: "-4px 0 20px", fontSize: 13, lineHeight: 1.5, color: C.muted },
   tableWrapper: { background: C.white, border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" },
   table: { width: "100%", borderCollapse: "collapse" },
   thead: { background: C.bg },

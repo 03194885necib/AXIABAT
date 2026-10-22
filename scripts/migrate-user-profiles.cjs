@@ -9,6 +9,7 @@ const PASSWORD_LIKE_KEY =
   /^(?:password|passwd|pass|pwd|mot[_\s-]?de[_\s-]?passe|credentials?)(?:[_-]?(?:hash|encrypted|salt))?$/i;
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
+const listUserIdsNotUidLength = args.includes("--list-user-ids-not-28");
 
 function getOption(name) {
   const prefix = `--${name}=`;
@@ -57,6 +58,12 @@ function findSensitivePaths(value, path = [], results = { paths: [], unsupported
 }
 
 async function main() {
+  if (apply && listUserIdsNotUidLength) {
+    const error = new Error("list-user-ids-mode-is-read-only");
+    error.code = "list-user-ids-mode-is-read-only";
+    throw error;
+  }
+
   const serviceAccountPath = path.resolve(
     getOption("service-account")
       || path.join(__dirname, "..", ".secrets", "firebase-admin-service-account.json")
@@ -83,6 +90,23 @@ async function main() {
   try {
     const db = getFirestore(app);
     const snapshot = await db.collection("users").get();
+
+    // This is only a length heuristic. It reports document IDs and never
+    // checks Firebase Authentication or reads profile field values.
+    if (listUserIdsNotUidLength) {
+      const documentIds = snapshot.docs
+        .map((profileDoc) => profileDoc.id)
+        .filter((id) => id.length !== 28);
+      console.log(JSON.stringify({
+        mode: "READ ONLY — document ID length check",
+        totalProfiles: snapshot.size,
+        expectedAuthUidLength: 28,
+        documentIdCountNot28: documentIds.length,
+        documentIds,
+      }, null, 2));
+      return;
+    }
+
     const plans = snapshot.docs.map((profileDoc) => {
       const data = profileDoc.data();
       const sensitive = findSensitivePaths(data);
