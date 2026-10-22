@@ -8,6 +8,27 @@ import FileUpload from './FileUpload'; // New component for file uploads
 import ReportGenerator from './ReportGenerator'; // New component for PDF generation
 import './MonthlyReportDashboard.css'; // For basic styling
 
+const CONTENT_TYPE_BY_EXTENSION = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    csv: 'text/csv',
+    dwg: 'image/vnd.dwg',
+    dxf: 'application/dxf',
+    zip: 'application/zip',
+};
+
+const getContentTypeFromFileName = (fileName) => {
+    const extension = String(fileName || '').match(/\.([^.]+)$/)?.[1]?.toLowerCase();
+    return extension ? CONTENT_TYPE_BY_EXTENSION[extension] : undefined;
+};
+
 const MonthlyReportDashboard = () => {
     const [projectId, setProjectId] = useState('');
     const [projects, setProjects] = useState([]); // New state to store fetched projects
@@ -122,10 +143,17 @@ const MonthlyReportDashboard = () => {
             alert("Please select a project first.");
             return;
         }
+        const contentType = getContentTypeFromFileName(file?.name);
+        if (!contentType) {
+            setError("Format de fichier non pris en charge.");
+            alert("Format de fichier non pris en charge.");
+            return;
+        }
+        setError(null);
         setLoading(true);
         try {
             const fileRef = ref(storage, `project_files/${projectId}/${type}/${file.name}`);
-            await uploadBytes(fileRef, file);
+            await uploadBytes(fileRef, file, { contentType });
             const fileURL = await getDownloadURL(fileRef);
             setUploadedFiles(prev => [...prev, { name: file.name, url: fileURL, type: type }]);
             alert(`${file.name} uploaded successfully!`);

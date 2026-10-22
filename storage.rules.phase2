@@ -22,10 +22,28 @@ service firebase.storage {
           in ['admin', 'chef_projet', 'conducteur'];
     }
 
-    function allowedProjectFile() {
+    function allowedCadOrArchiveFile(fileName) {
       return request.resource != null
-        && request.resource.size <= 10 * 1024 * 1024
         && request.resource.contentType in [
+          'application/octet-stream',
+          'application/acad',
+          'image/vnd.dwg',
+          'application/dxf',
+          'application/zip',
+          'application/x-zip-compressed'
+        ]
+        && (
+          fileName.matches('(?i).*\\.dwg$')
+          || fileName.matches('(?i).*\\.dxf$')
+          || fileName.matches('(?i).*\\.zip$')
+        );
+    }
+
+    function allowedProjectFile(fileName) {
+      return request.resource != null
+        && request.resource.size <= 25 * 1024 * 1024
+        && (
+          request.resource.contentType in [
           'application/pdf',
           'image/jpeg',
           'image/png',
@@ -35,48 +53,15 @@ service firebase.storage {
           'application/vnd.ms-excel',
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'text/csv'
-        ];
+          ]
+          || allowedCadOrArchiveFile(fileName)
+        );
     }
 
     match /project_files/{projectId}/{type}/{fileName} {
       allow read: if hasActiveProfile();
-      allow create, update: if canWriteProjectFiles() && allowedProjectFile();
+      allow create, update: if canWriteProjectFiles() && allowedProjectFile(fileName);
       allow delete: if canWriteProjectFiles();
-
-      // VARIANTE À CHOISIR — NON ACTIVE :
-      // Pour inclure DWG/DXF et ZIP et relever la limite à 25 Mio, remplacer
-      // allowedProjectFile() par la fonction ci-dessous. Les MIME DWG/DXF
-      // varient selon les systèmes; ne pas ajouter application/octet-stream,
-      // qui autoriserait aussi des fichiers inconnus.
-      /*
-      function allowedProjectFile25MiB() {
-        return request.resource != null
-          && request.resource.size <= 25 * 1024 * 1024
-          && request.resource.contentType in [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/webp',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/csv',
-            'application/acad',
-            'application/x-acad',
-            'application/dwg',
-            'application/x-dwg',
-            'image/vnd.dwg',
-            'image/x-dwg',
-            'application/dxf',
-            'application/x-dxf',
-            'image/vnd.dxf',
-            'image/x-dxf',
-            'application/zip',
-            'application/x-zip-compressed'
-          ];
-      }
-      */
     }
   }
 }

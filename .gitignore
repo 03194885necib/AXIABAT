@@ -13,10 +13,8 @@
 
 # misc
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Environment files; use Replit Secrets for values that must not be committed.
+.env*
 
 # Local Firebase Admin service-account credentials; never commit these files.
 /.secrets/

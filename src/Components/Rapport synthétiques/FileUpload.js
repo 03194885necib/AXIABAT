@@ -25,7 +25,11 @@ const FileUpload = ({ onFileUpload }) => {
 
     return (
         <form onSubmit={handleSubmit} className="file-upload-form">
-            <input type="file" onChange={handleFileChange} />
+            <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv,.dwg,.dxf,.zip"
+                onChange={handleFileChange}
+            />
             <select value={fileType} onChange={handleTypeChange}>
                 <option value="pv_reunion">PV de réunion</option> [cite: 3]
                 <option value="pv_reception_travaux">PV de réception des travaux</option> [cite: 3]

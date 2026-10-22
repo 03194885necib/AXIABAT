@@ -14,7 +14,7 @@ const ADMIN_UID = "test-admin";
 const WRITER_UID = "test-writer";
 const VIEWER_UID = "test-viewer";
 const INACTIVE_UID = "test-inactive";
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 const firestoreRules = fs.readFileSync(
   path.join(__dirname, "..", "firestore.rules.phase2b"),
@@ -163,6 +163,42 @@ async function main() {
       }));
     });
 
+    await check("case-insensitive DWG extension plus allowed MIME is accepted", async () => {
+      const storage = testEnv.authenticatedContext(WRITER_UID).storage();
+      await assertSucceeds(
+        storage.ref("project_files/demo-project/pv_reunion/plan.DWG")
+          .put(new Uint8Array([1, 2, 3]), { contentType: "image/vnd.dwg" })
+      );
+    });
+
+    await check("DXF and ZIP uploads with their matching MIME types are accepted", async () => {
+      const storage = testEnv.authenticatedContext(WRITER_UID).storage();
+      await assertSucceeds(
+        storage.ref("project_files/demo-project/pv_reunion/plan.dxf")
+          .put(new Uint8Array([1]), { contentType: "application/dxf" })
+      );
+      await assertSucceeds(
+        storage.ref("project_files/demo-project/pv_reunion/archive.zip")
+          .put(new Uint8Array([1]), { contentType: "application/zip" })
+      );
+    });
+
+    await check("executable extension with generic MIME is rejected", async () => {
+      const storage = testEnv.authenticatedContext(WRITER_UID).storage();
+      await assertFails(
+        storage.ref("project_files/demo-project/pv_reunion/installer.exe")
+          .put(new Uint8Array([1]), { contentType: "application/octet-stream" })
+      );
+    });
+
+    await check("DWG extension with a MIME outside the CAD/archive allowlist is rejected", async () => {
+      const storage = testEnv.authenticatedContext(WRITER_UID).storage();
+      await assertFails(
+        storage.ref("project_files/demo-project/pv_reunion/invalid.dwg")
+          .put(new Uint8Array([1]), { contentType: "text/plain" })
+      );
+    });
+
     await check("active viewer can read a project file but cannot upload", async () => {
       const viewerStorage = testEnv.authenticatedContext(VIEWER_UID).storage();
       const savedFile = viewerStorage.ref(
@@ -173,6 +209,10 @@ async function main() {
         viewerStorage.ref("project_files/demo-project/pv_reunion/viewer.pdf")
           .put(new Uint8Array([1]), { contentType: "application/pdf" })
       );
+      await assertFails(
+        viewerStorage.ref("project_files/demo-project/pv_reunion/viewer.zip")
+          .put(new Uint8Array([1]), { contentType: "application/zip" })
+      );
     });
 
     await check("inactive profile cannot read project files", async () => {
@@ -182,7 +222,7 @@ async function main() {
       );
     });
 
-    await check("Storage rejects disallowed MIME types and oversized files", async () => {
+    await check("Storage rejects disallowed MIME types and files larger than 25 MiB", async () => {
       const storage = testEnv.authenticatedContext(WRITER_UID).storage();
       await assertFails(
         storage.ref("project_files/demo-project/pv_reunion/readme.txt")
@@ -190,7 +230,7 @@ async function main() {
       );
       await assertFails(
         storage.ref("project_files/demo-project/pv_reunion/too-large.pdf")
-          .put(new Uint8Array(MAX_UPLOAD_BYTES + 1), { contentType: "application/pdf" })
+          .put(new Uint8Array(MAX_UPLOAD_BYTES + 1024 * 1024), { contentType: "application/pdf" })
       );
     });
   } finally {
