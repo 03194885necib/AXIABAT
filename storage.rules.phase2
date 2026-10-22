@@ -1,0 +1,47 @@
+// PHASE 2 — PROPOSITION NON DEPLOYEE.
+// Protège les fichiers de project_files à partir du profil Firestore users/{uid}.
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function hasActiveProfile() {
+      return request.auth != null
+        && firestore.exists(
+          /databases/(default)/documents/users/$(request.auth.uid)
+        )
+        && firestore.get(
+          /databases/(default)/documents/users/$(request.auth.uid)
+        ).data.get('actif', false) == true;
+    }
+
+    function canWriteProjectFiles() {
+      return hasActiveProfile()
+        && firestore.get(
+          /databases/(default)/documents/users/$(request.auth.uid)
+        ).data.get('role', '')
+          in ['admin', 'chef_projet', 'conducteur'];
+    }
+
+    function allowedProjectFile() {
+      return request.resource != null
+        && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType in [
+          'application/pdf',
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/csv'
+        ];
+    }
+
+    match /project_files/{projectId}/{type}/{fileName} {
+      allow read: if hasActiveProfile();
+      allow create, update: if canWriteProjectFiles() && allowedProjectFile();
+      allow delete: if canWriteProjectFiles();
+    }
+  }
+}

@@ -1,6 +1,8 @@
 "use strict";
 
-const { applicationDefault, initializeApp } = require("firebase-admin/app");
+const fs = require("node:fs");
+const path = require("node:path");
+const { cert, initializeApp } = require("firebase-admin/app");
 const { FieldPath, FieldValue, getFirestore } = require("firebase-admin/firestore");
 
 const PASSWORD_LIKE_KEY =
@@ -11,6 +13,25 @@ const apply = args.includes("--apply");
 function getOption(name) {
   const prefix = `--${name}=`;
   return args.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+}
+
+function loadServiceAccount(serviceAccountPath) {
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
+  } catch {
+    throw new Error("invalid-service-account-file");
+  }
+
+  if (
+    !serviceAccount
+    || typeof serviceAccount.project_id !== "string"
+    || typeof serviceAccount.client_email !== "string"
+    || typeof serviceAccount.private_key !== "string"
+  ) {
+    throw new Error("invalid-service-account-file");
+  }
+  return serviceAccount;
 }
 
 function findSensitivePaths(value, path = [], results = { paths: [], unsupported: false }, inArray = false) {
@@ -36,20 +57,26 @@ function findSensitivePaths(value, path = [], results = { paths: [], unsupported
 }
 
 async function main() {
-  const projectId = getOption("project-id")
-    || process.env.GOOGLE_CLOUD_PROJECT
-    || process.env.GCLOUD_PROJECT;
+  const serviceAccountPath = path.resolve(
+    getOption("service-account")
+      || path.join(__dirname, "..", ".secrets", "firebase-admin-service-account.json")
+  );
+  const serviceAccount = loadServiceAccount(serviceAccountPath);
+  const projectId = getOption("project-id") || serviceAccount.project_id;
   const confirmation = getOption("confirm-project-id");
 
   if (!projectId) {
     throw new Error("missing-project-id");
+  }
+  if (projectId !== serviceAccount.project_id) {
+    throw new Error("service-account-project-mismatch");
   }
   if (apply && confirmation !== projectId) {
     throw new Error("apply-requires-matching-confirm-project-id");
   }
 
   const app = initializeApp(
-    { credential: applicationDefault(), projectId },
+    { credential: cert(serviceAccount), projectId },
     `user-profile-migration-${Date.now()}`
   );
 
@@ -59,9 +86,13 @@ async function main() {
     const plans = snapshot.docs.map((profileDoc) => {
       const data = profileDoc.data();
       const sensitive = findSensitivePaths(data);
+      const missingRole = !Object.prototype.hasOwnProperty.call(data, "role")
+        || data.role == null
+        || data.role === "";
       return {
         ref: profileDoc.ref,
         id: profileDoc.id,
+        missingRole,
         missingActif: !Object.prototype.hasOwnProperty.call(data, "actif"),
         passwordPaths: sensitive.paths,
         unsupportedArrayFields: sensitive.unsupported,
@@ -69,7 +100,8 @@ async function main() {
     });
 
     const affected = plans.filter(
-      (plan) => plan.missingActif || plan.passwordPaths.length > 0 || plan.unsupportedArrayFields
+      (plan) => plan.missingRole || plan.missingActif || plan.passwordPaths.length > 0
+        || plan.unsupportedArrayFields
     );
     const unsupported = affected.filter((plan) => plan.unsupportedArrayFields);
     const passwordFieldCount = affected.reduce(
@@ -81,7 +113,12 @@ async function main() {
       mode: apply ? "APPLY" : "DRY RUN — no writes",
       projectId,
       totalProfiles: snapshot.size,
+      profilesWithoutRole: plans.filter((plan) => plan.missingRole).length,
       profilesMissingActif: plans.filter((plan) => plan.missingActif).length,
+      profilesToSetViewerAndInactive: plans.filter((plan) => plan.missingRole).length,
+      profilesToSetActiveTrue: plans.filter(
+        (plan) => !plan.missingRole && plan.missingActif
+      ).length,
       passwordLikeFieldsToDelete: passwordFieldCount,
       affectedProfileIds: affected.map((plan) => plan.id),
       profilesWithPasswordFieldsInsideArrays: unsupported.map((plan) => plan.id),
@@ -98,7 +135,12 @@ async function main() {
 
     const writes = affected.map((plan) => {
       const updates = [];
-      if (plan.missingActif) updates.push(new FieldPath("actif"), true);
+      if (plan.missingRole) {
+        updates.push(new FieldPath("role"), "viewer");
+        updates.push(new FieldPath("actif"), false);
+      } else if (plan.missingActif) {
+        updates.push(new FieldPath("actif"), true);
+      }
       for (const path of plan.passwordPaths) {
         updates.push(new FieldPath(...path), FieldValue.delete());
       }
@@ -117,7 +159,10 @@ async function main() {
     console.log(JSON.stringify({
       completed: true,
       updatedProfiles: writes.length,
-      activeFieldsAdded: plans.filter((plan) => plan.missingActif).length,
+      profilesSetViewerAndInactive: plans.filter((plan) => plan.missingRole).length,
+      activeTrueFieldsAdded: plans.filter(
+        (plan) => !plan.missingRole && plan.missingActif
+      ).length,
       passwordLikeFieldsDeleted: passwordFieldCount,
     }, null, 2));
   } finally {
@@ -126,7 +171,10 @@ async function main() {
 }
 
 main().catch((error) => {
-  // Do not print document contents or credential material in error output.
-  console.error(`User profile migration stopped (${error.code || error.message || "unknown-error"}).`);
+  // Keep errors free of profile data, email addresses, and credential values.
+  const code = typeof error.code === "string" && /^[a-z0-9_-]+$/i.test(error.code)
+    ? error.code
+    : "unknown-error";
+  console.error(`User profile migration stopped (${code}); no profile or credential values were printed.`);
   process.exitCode = 1;
 });

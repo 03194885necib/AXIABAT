@@ -18,6 +18,12 @@
 .env.test.local
 .env.production.local
 
+# Local Firebase Admin service-account credentials; never commit these files.
+/.secrets/
+/service-account*.json
+/*-firebase-adminsdk-*.json
+/*.service-account.json
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

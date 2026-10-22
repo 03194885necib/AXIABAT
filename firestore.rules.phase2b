@@ -1,0 +1,184 @@
+// PHASE 2B — PROPOSITION NON DEPLOYEE.
+// Base : firestore.rules.phase2; self-service profile creation is removed.
+// New accounts and role/status changes are admin-only; password fields are denied.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function hasActiveAccount() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.get('actif', true) == true;
+    }
+
+    function isAdmin() {
+      return hasActiveAccount()
+        && get(userPath(request.auth.uid)).data.get('role', '') == 'admin';
+    }
+
+    // Phase 2 requires an explicit actif: true for access to business data.
+    function hasActiveBusinessAccount() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.get('actif', false) == true;
+    }
+
+    function canWriteBusiness() {
+      return hasActiveBusinessAccount()
+        && get(userPath(request.auth.uid)).data.get('role', '')
+          in ['admin', 'chef_projet', 'conducteur'];
+    }
+
+    function validRole(role) {
+      return role in ['admin', 'chef_projet', 'conducteur', 'viewer'];
+    }
+
+    function hasNoPasswordField(data) {
+      return !data.keys().hasAny(['password']);
+    }
+
+    function validAdminAccountCreate() {
+      return request.resource.data.keys().hasAll([
+          'displayName', 'email', 'role', 'actif', 'createdAt', 'createdBy'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'displayName', 'email', 'role', 'actif', 'createdAt', 'createdBy'
+        ])
+        && request.resource.data.displayName is string
+        && request.resource.data.email is string
+        && validRole(request.resource.data.role)
+        && request.resource.data.actif is bool
+        && request.resource.data.actif == true
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.createdBy == request.auth.uid
+        && hasNoPasswordField(request.resource.data);
+    }
+
+    function logRoleChangeMatchesAccount() {
+      let detail = request.resource.data.get('détail', {});
+      let targetUid = detail.get('targetUid', '');
+      let targetPath = userPath(targetUid);
+
+      return detail.keys().hasAll(['targetUid', 'previousRole', 'newRole'])
+        && detail.keys().hasOnly(['targetUid', 'previousRole', 'newRole'])
+        && targetUid is string
+        && targetUid != request.auth.uid
+        && validRole(detail.get('previousRole', ''))
+        && validRole(detail.get('newRole', ''))
+        && exists(targetPath)
+        && get(targetPath).data.get('role', '') == detail.previousRole
+        && existsAfter(targetPath)
+        && getAfter(targetPath).data.get('role', '') == detail.newRole;
+    }
+
+    function logStatusChangeMatchesAccount(expectedStatus) {
+      let detail = request.resource.data.get('détail', {});
+      let targetUid = detail.get('targetUid', '');
+      let targetPath = userPath(targetUid);
+
+      return detail.keys().hasAll(['targetUid', 'actif'])
+        && detail.keys().hasOnly(['targetUid', 'actif'])
+        && targetUid is string
+        && targetUid != request.auth.uid
+        && detail.actif is bool
+        && detail.actif == expectedStatus
+        && exists(targetPath)
+        && get(targetPath).data.get('actif', true) != detail.actif
+        && existsAfter(targetPath)
+        && getAfter(targetPath).data.get('actif', false) == detail.actif;
+    }
+
+    function logAccountCreatedMatchesAccount() {
+      let detail = request.resource.data.get('détail', {});
+      let targetUid = detail.get('targetUid', '');
+      let targetPath = userPath(targetUid);
+
+      return detail.keys().hasAll(['targetUid', 'role'])
+        && detail.keys().hasOnly(['targetUid', 'role'])
+        && targetUid is string
+        && targetUid != request.auth.uid
+        && validRole(detail.get('role', ''))
+        && !exists(targetPath)
+        && existsAfter(targetPath)
+        && getAfter(targetPath).data.get('role', '') == detail.role;
+    }
+
+    function validActivityLog() {
+      return request.resource.data.keys().hasAll(['uid', 'action', 'date', 'détail'])
+        && request.resource.data.keys().hasOnly(['uid', 'action', 'date', 'détail'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.date is timestamp
+        && request.resource.data.get('détail', {}) is map
+        && (
+          (
+            request.resource.data.action == 'ROLE_CHANGED'
+            && logRoleChangeMatchesAccount()
+          )
+          || (
+            request.resource.data.action == 'ACCOUNT_ACTIVATED'
+            && logStatusChangeMatchesAccount(true)
+          )
+          || (
+            request.resource.data.action == 'ACCOUNT_DEACTIVATED'
+            && logStatusChangeMatchesAccount(false)
+          )
+          || (
+            request.resource.data.action == 'ACCOUNT_CREATED'
+            && logAccountCreatedMatchesAccount()
+          )
+        );
+    }
+
+    match /users/{uid} {
+      allow get: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // No self-create path: an active admin creates a different user's profile.
+      allow create: if isAdmin()
+        && uid != request.auth.uid
+        && validAdminAccountCreate();
+
+      allow update: if hasNoPasswordField(request.resource.data)
+        && (
+          (
+            isAdmin()
+            && uid != request.auth.uid
+            && validRole(request.resource.data.get('role', ''))
+            && request.resource.data.get('actif', resource.data.get('actif', true)) is bool
+          ) || (
+            hasActiveAccount()
+            && request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['displayName', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
+    // Activity entries are append-only and must match the account change batch.
+    match /logs_activite/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin() && validActivityLog();
+      allow update, delete: if false;
+    }
+
+    // Phase 2 business-data policy remains unchanged.
+    match /{collectionName}/{document=**} {
+      allow read: if collectionName != 'users'
+        && collectionName != 'logs_activite'
+        && hasActiveBusinessAccount();
+      allow write: if collectionName != 'users'
+        && collectionName != 'logs_activite'
+        && canWriteBusiness();
+    }
+  }
+}
