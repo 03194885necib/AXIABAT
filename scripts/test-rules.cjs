@@ -108,6 +108,21 @@ async function main() {
       await assertSucceeds(batch.commit());
     });
 
+    await check("signed-in user can read the profile at users/{uid}", async () => {
+      const db = testEnv.authenticatedContext(ADMIN_UID).firestore();
+      const profile = await db.doc(`users/${ADMIN_UID}`).get();
+      assert.equal(profile.exists, true);
+      assert.equal(profile.id, ADMIN_UID);
+      assert.equal(profile.data().role, "admin");
+      assert.equal(typeof profile.data().actif, "boolean");
+      assert.equal(profile.data().actif, true);
+    });
+
+    await check("viewer cannot read another user's users/{uid} profile", async () => {
+      const db = testEnv.authenticatedContext(VIEWER_UID).firestore();
+      await assertFails(db.doc(`users/${ADMIN_UID}`).get());
+    });
+
     await check("self-service account creation is denied", async () => {
       const db = testEnv.authenticatedContext("test-self-create").firestore();
       await assertFails(db.doc("users/test-self-create").set({

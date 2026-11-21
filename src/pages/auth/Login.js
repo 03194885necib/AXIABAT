@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { getLoginErrorMessage, useAuth } from "../../context/AuthContext";
 
 const C = {
   primary: "#1e3a5f",
@@ -14,7 +14,7 @@ const C = {
 };
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, authError } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -22,6 +22,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const visibleError = error || (authError ? getLoginErrorMessage(authError) : "");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,8 +35,8 @@ export default function Login() {
     try {
       await login(email, password);
       navigate("/home");
-    } catch {
-      setError("Email ou mot de passe incorrect.");
+    } catch (loginError) {
+      setError(getLoginErrorMessage(loginError));
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export default function Login() {
           <h1 style={s.title}>Connexion</h1>
           <p style={s.subtitle}>Accédez à votre espace de travail</p>
 
-          {error && <div style={s.alert}>{error}</div>}
+          {visibleError && <div role="alert" style={s.alert}>{visibleError}</div>}
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={s.field}>
