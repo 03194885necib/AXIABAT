@@ -145,6 +145,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
       try {
         setCurrentUser(user);
         if (!user) {
@@ -153,7 +154,6 @@ export function AuthProvider({ children }) {
         }
 
         setAuthError(null);
-        setUserProfile(null);
         const profile = await readUserProfile(user.uid);
         setUserProfile(profile);
       } catch (error) {
