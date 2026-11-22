@@ -63,10 +63,6 @@
 //             />
 //           </div>
 //           <button type="submit">Se connecter</button>
-//           {/* <p>
-//             mot de passe oblier?{" "}
-//             <Link to="/Signup" className="signup-link">Créer un compte</Link>
-//           </p> */}
 //         </form>
 //       </div>
 //     </section>

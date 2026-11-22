@@ -4,3 +4,4 @@
 - [GitHub API synchronization](github-api-sync.md) — publish file trees in one low-request batch to stay below the integration rate limit.
 - [React hook warning triage](react-hook-warning-triage.md) — verify package deduplication and a clean workflow restart before changing React dependencies.
 - [Firebase emulator Java](firebase-emulator-java.md) — check the runtime version: Firebase CLI 15 required JDK 21 although the Replit Java module supplied Java 19.
+- [CRA stale build diagnostics](cra-stale-build-cache.md) — suspect generated build caches when react-scripts reports parser errors on source that parses cleanly.
