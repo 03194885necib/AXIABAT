@@ -1,12 +1,14 @@
 [build]
-command = "NODE_OPTIONS=--max-old-space-size=4096 npm install --no-audit --no-fund && CI=false npm run build"
-publish = "build"
+  command = "npm install --no-audit --no-fund && npm run build"
+  publish = "build"
 
 [build.environment]
-NODE_VERSION = "20"
-DISABLE_ESLINT_PLUGIN = "true"
+  NODE_VERSION = "20"
+  CI = "false"
+  NODE_OPTIONS = "--max-old-space-size=4096"
+  DISABLE_ESLINT_PLUGIN = "true"
 
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
+  from = "/*"
+  to = "/index.html"
+  status = 200
